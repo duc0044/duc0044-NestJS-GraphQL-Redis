@@ -1,0 +1,39 @@
+# docker-compose.yml
+
+services:
+  # Redis Service
+  redis:
+    image: redis:7.4.0-alpine
+    container_name: redis-server
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --requirepass duc0044
+    environment:
+      # - REDIS_PASSWORD=duc0044
+    restart: unless-stopped
+    networks:
+      - duc0044-network
+
+  # Redis Commander (GUI)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: redis-duc0044
+    ports:
+      - '8081:8081'
+    environment:
+      - REDIS_HOSTS=local:redis:6379:0:duc0044
+      # - REDIS_PASSWORD=duc0044
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - duc0044-network
+
+volumes:
+  redis-data:
+
+networks:
+  duc0044-network:
+    driver: bridge
