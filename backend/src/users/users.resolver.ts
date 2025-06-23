@@ -1,33 +1,46 @@
 import { Resolver, Query, Args, Mutation } from '@nestjs/graphql';
 import { User } from './users.entity';
 import { UsersService } from './users.service';
-import { CreateUserInput, UpdateUserInput } from './users.dto';
+import { CreateUserInput, UpdateUserInput } from './dto/users.dto';
+import { UserResponse } from './dto/user-response.dto';
 
 @Resolver(() => User)
 export class UsersResolver {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Query(() => [User], { name: 'users' })
   async users(): Promise<User[]> {
     return this.usersService.findAll();
   }
-  @Query(() => User, { name: 'user' })
-  async user(@Args('id') id: number): Promise<User> {
-    return this.usersService.findOne(id);
+  @Query(() => User, { name: 'user', nullable: true })
+  async user(@Args('id') id: number): Promise<User | null> {
+    return await this.usersService.findOne(id);
   }
 
-  @Mutation(() => User, { name: 'createUser' })
-  async createUser(@Args('user') user: CreateUserInput): Promise<User> {
-    return this.usersService.create(user);
+  @Mutation(() => UserResponse)
+  async createUser(@Args('user') user: CreateUserInput): Promise<UserResponse> {
+    const created = await this.usersService.create(user);
+    return {
+      message: 'Tạo user thành công!',
+      user: created,
+    };
   }
 
-  @Mutation(() => User, { name: 'updateUser' })
-  async updateUser(@Args('user') user: UpdateUserInput): Promise<User> {
-    return this.usersService.update(user.id, user);
+  @Mutation(() => UserResponse)
+  async updateUser(@Args('user') user: UpdateUserInput): Promise<UserResponse> {
+    const updated = await this.usersService.update(user.id, user);
+    return {
+      message: 'Cập nhật user thành công!',
+      user: updated,
+    };
   }
 
-  @Mutation(() => User, { name: 'deleteUser' })
-  async deleteUser(@Args('id') id: number): Promise<User> {
-    return this.usersService.delete(id);
+  @Mutation(() => UserResponse)
+  async deleteUser(@Args('id') id: number): Promise<UserResponse> {
+    const deleted = await this.usersService.delete(id);
+    return {
+      message: 'Xóa user thành công!',
+      user: deleted,
+    };
   }
 }

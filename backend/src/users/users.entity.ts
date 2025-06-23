@@ -1,10 +1,20 @@
-import { ObjectType, Field, ID } from '@nestjs/graphql';
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Field, ObjectType, Int } from '@nestjs/graphql';
+import { Post } from 'src/posts/post.entity';
+import { Comment } from 'src/comment/comment.entity';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  OneToMany,
+  CreateDateColumn,
+  BeforeInsert,
+} from 'typeorm';
+import * as bcrypt from 'bcrypt';
 
 @ObjectType()
-@Entity()
+@Entity('users')
 export class User {
-  @Field(() => ID)
+  @Field(() => Int)
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -16,11 +26,23 @@ export class User {
   @Column({ unique: true })
   email: string;
 
-  @Field()
   @Column()
   password: string;
 
-  @Field({ nullable: true })
-  @Column({ nullable: true })
-  avatar?: string;
+  @Field(() => [Post])
+  @OneToMany(() => Post, (post) => post.author)
+  posts: Post[];
+
+  @Field(() => [Comment])
+  @OneToMany(() => Comment, (comment) => comment.author)
+  comments: Comment[];
+
+  @Field()
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @BeforeInsert()
+  async hashPassword() {
+    this.password = await bcrypt.hash(this.password, 10);
+  }
 }

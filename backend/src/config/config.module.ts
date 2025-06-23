@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { databaseConfig } from './database.config';
+import { redisConfig } from './redis.config';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
@@ -10,7 +11,7 @@ import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig],
+      load: [databaseConfig, redisConfig],
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],

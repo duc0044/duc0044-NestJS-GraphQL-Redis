@@ -4,14 +4,22 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     component: () => import('layouts/MainLayout.vue'),
-    children: [{ path: '', component: () => import('pages/IndexPage.vue') }],
+    children: [
+      { path: '', redirect: '/users/list' },
+      { path: 'users/list', component: () => import('pages/users/ListPage.vue') },
+      { path: 'users/add', component: () => import('pages/users/AddPage.vue') },
+    ],
   },
-
-  // Always leave this as last one,
-  // but you can also remove it
   {
     path: '/:catchAll(.*)*',
     component: () => import('pages/ErrorNotFound.vue'),
+  },
+  {
+    path: '/public',
+    component: () => import('layouts/PublicLayout.vue'),
+    children: [
+      { path: '/', component: () => import('pages/users/ListPage.vue') },
+    ],
   },
 ];
 

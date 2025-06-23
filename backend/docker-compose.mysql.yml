@@ -1,0 +1,45 @@
+# docker-compose.mysql.yml
+
+services:
+  # MySQL Service
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-server
+    ports:
+      - '3306:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: 140204
+      MYSQL_DATABASE: test
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
+    networks:
+      - duc0044-network
+
+  # phpMyAdmin (GUI for MySQL)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpmyadmin-duc0044
+    ports:
+      - '8080:80'
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: 140204
+    depends_on:
+      - mysql
+    restart: unless-stopped
+    networks:
+      - duc0044-network
+
+volumes:
+  mysql-data:
+
+networks:
+  duc0044-network:
+    driver: bridge
