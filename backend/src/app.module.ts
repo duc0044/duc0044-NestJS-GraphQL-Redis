@@ -1,19 +1,28 @@
 import { Module } from '@nestjs/common';
-import { UsersModule } from './users/users.module';
+
 import { AppConfigModule } from './config/config.module';
-import { AuthModule } from './auth/auth.module';
-import { PostsModule } from './posts/posts.module';
-import { CommentModule } from './comment/comment.module';
 import { RedisModule } from './redis/redis.module';
+import { AuthModule } from './modules/auth.module';
+
+// Blog modules
+import { UserModule } from './modules/user.module';
+import { CategoryModule } from './modules/category.module';
+import { PostModule } from './modules/post.module';
+import { CommentModule } from './modules/comment.module';
+import { TagModule } from './modules/tag.module';
 
 @Module({
   imports: [
     AppConfigModule,
     RedisModule,
-    UsersModule,
     AuthModule,
-    PostsModule,
+
+    // Blog modules
+    UserModule,
+    CategoryModule,
+    PostModule,
     CommentModule,
+    TagModule,
   ],
 })
 export class AppModule {}

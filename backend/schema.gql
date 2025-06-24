@@ -2,37 +2,56 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-type AuthUserDto {
-  email: String!
-  id: Int!
+type Category {
+  created_at: DateTime!
+  description: String
+  id: ID!
   name: String!
-  password: String
+  posts: [Post!]
+  slug: String!
 }
 
 type Comment {
-  author: User!
   content: String!
-  createdAt: DateTime!
-  id: Int!
+  created_at: DateTime!
+  id: ID!
   post: Post!
+  post_id: Float!
+  user: User
+  user_id: Float
+}
+
+input CreateCategoryInput {
+  description: String
+  name: String!
+  slug: String!
 }
 
 input CreateCommentInput {
-  authorId: Int!
   content: String!
-  postId: Int!
+  post_id: Int!
+  user_id: Int
 }
 
 input CreatePostInput {
-  authorId: Int!
+  category_id: Int
   content: String!
+  slug: String!
+  tag_ids: [Int!]
+  thumbnail: String
   title: String!
+}
+
+input CreateTagInput {
+  name: String!
+  slug: String!
 }
 
 input CreateUserInput {
   email: String!
-  name: String!
   password: String!
+  role: UserRole
+  username: String!
 }
 
 """
@@ -46,72 +65,131 @@ input LoginInput {
 }
 
 type LoginResponse {
-  access_token: String!
+  token: String!
+  user: User!
 }
 
 type Mutation {
   clearAllCache: String!
+  createCategory(createCategoryInput: CreateCategoryInput!): Category!
   createComment(createCommentInput: CreateCommentInput!): Comment!
   createPost(createPostInput: CreatePostInput!): Post!
-  createUser(user: CreateUserInput!): UserResponse!
+  createTag(createTagInput: CreateTagInput!): Tag!
+  createUser(createUserInput: CreateUserInput!): User!
   deleteCache(key: String!): Float!
-  deletePost(id: Float!): Post!
-  deleteUser(id: Float!): UserResponse!
+  demoteToUser(userId: Int!): User!
   login(loginInput: LoginInput!): LoginResponse!
+  promoteToAdmin(userId: Int!): User!
+  removeCategory(id: Int!): Boolean!
+  removeComment(id: Int!): Boolean!
+  removePost(id: Int!): Boolean!
+  removeTag(id: Int!): Boolean!
+  removeUser(id: Int!): Boolean!
   setCache(key: String!, ttl: Float, value: String!): String!
   setExpire(key: String!, seconds: Float!): Float!
-  signup(createUserInput: CreateUserInput!): User!
-  updatePost(updatePostInput: UpdatePostInput!): Post!
-  updateUser(user: UpdateUserInput!): UserResponse!
+  updateCategory(id: Int!, updateCategoryInput: UpdateCategoryInput!): Category!
+  updateComment(id: Int!, updateCommentInput: UpdateCommentInput!): Comment!
+  updateMyProfile(updateUserInput: UpdateUserInput!): User!
+  updatePost(id: Int!, updatePostInput: UpdatePostInput!): Post!
+  updateTag(id: Int!, updateTagInput: UpdateTagInput!): Tag!
+  updateUser(id: Int!, updateUserInput: UpdateUserInput!): User!
 }
 
 type Post {
-  author: User!
-  comments: [Comment!]!
+  category: Category
+  category_id: Float
+  comments: [Comment!]
   content: String!
-  createdAt: DateTime!
-  id: Int!
+  created_at: DateTime!
+  id: ID!
+  slug: String!
+  tags: [Tag!]
+  thumbnail: String
   title: String!
+  updated_at: DateTime!
+  user: User!
+  user_id: Float!
 }
 
 type Query {
+  categories: [Category!]!
+  category(id: Int!): Category!
+  categoryBySlug(slug: String!): Category!
+  comment(id: Int!): Comment!
+  comments: [Comment!]!
   commentsByPost(postId: Int!): [Comment!]!
+  commentsByUser(userId: Int!): [Comment!]!
   getCache(key: String!): String
   getKeys(pattern: String!): [String!]!
   getTtl(key: String!): Float!
-  post(id: Float!): Post
+  isAdmin(userId: Int!): Boolean!
+  me: User!
+  myPosts: [Post!]!
+  post(id: Int!): Post!
+  postBySlug(slug: String!): Post!
   posts: [Post!]!
+  postsByCategory(categoryId: Int!): [Post!]!
+  postsByUser(userId: Int!): [Post!]!
   redisPing: String!
-  user(id: Float!): User
+  searchPosts(query: String!): [Post!]!
+  tag(id: Int!): Tag!
+  tagBySlug(slug: String!): Tag!
+  tags: [Tag!]!
+  user(id: Int!): User!
   users: [User!]!
-  whoAmI: AuthUserDto!
+}
+
+type Tag {
+  id: ID!
+  name: String!
+  posts: [Post!]
+  slug: String!
+}
+
+input UpdateCategoryInput {
+  description: String
+  name: String
+  slug: String
+}
+
+input UpdateCommentInput {
+  content: String
 }
 
 input UpdatePostInput {
-  authorId: Int
+  category_id: Int
   content: String
-  id: Int!
+  slug: String
+  tag_ids: [Int!]
+  thumbnail: String
   title: String
+}
+
+input UpdateTagInput {
+  name: String
+  slug: String
 }
 
 input UpdateUserInput {
   email: String
-  id: ID!
-  name: String
   password: String
+  role: UserRole
+  username: String
 }
 
 type User {
-  comments: [Comment!]!
-  createdAt: DateTime!
+  comments: [Comment!]
+  created_at: DateTime!
   email: String!
-  id: Int!
-  name: String!
-  posts: [Post!]!
+  id: ID!
+  posts: [Post!]
+  role: UserRole!
+  updated_at: DateTime!
+  username: String!
 }
 
-type UserResponse {
-  message: String!
-  user: User
-  users: [User!]
+"""User roles for access control"""
+enum UserRole {
+  ADMIN
+  USER
 }

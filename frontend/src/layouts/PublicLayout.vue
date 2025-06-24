@@ -16,6 +16,8 @@
       <q-tabs align="center">
         <q-route-tab to="/users/list" label="Users List" />
         <q-route-tab to="/users/add" label="Add User" />
+        <q-route-tab to="/auth/login" label="Login" />
+        <q-route-tab to="/auth/register" label="Register" />
         <q-avatar square class=" text-end">
           <img src="https://cdn.quasar.dev/img/avatar.png">
         </q-avatar>

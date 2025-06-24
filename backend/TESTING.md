@@ -26,6 +26,59 @@ npm run dev
 - **phpMyAdmin**: http://localhost:8080 (root/140204)
 - **Redis Commander**: http://localhost:8081 (password: duc0044)
 
+## 🔐 Authentication và Authorization
+
+### 1. Tạo User và Login
+
+```graphql
+# Tạo user mới
+mutation {
+  createUser(
+    createUserInput: {
+      name: "John Doe"
+      email: "john@example.com"
+      password: "password123"
+    }
+  ) {
+    id
+    name
+    email
+    role
+  }
+}
+
+# Login để lấy JWT token
+mutation {
+  login(loginInput: { email: "john@example.com", password: "password123" }) {
+    user {
+      id
+      name
+      email
+      role
+    }
+    token
+  }
+}
+```
+
+### 2. Sử dụng JWT Token
+
+Sau khi login, bạn sẽ nhận được JWT token. Sử dụng token này trong header `Authorization` để truy cập các endpoint được bảo vệ:
+
+```bash
+# Trong GraphQL Playground, thêm vào HTTP Headers:
+{
+  "Authorization": "Bearer YOUR_JWT_TOKEN_HERE"
+}
+```
+
+### 3. Test Authentication với Script
+
+```bash
+# Chạy script test authentication
+node test-auth.js
+```
+
 ## 🧪 Test GraphQL Queries
 
 ### 1. Test Redis Connection
@@ -64,25 +117,20 @@ query {
 }
 ```
 
-### 3. Test User Operations (with Cache)
+### 3. Test User Operations (with Authentication)
 
 ```graphql
-# Create user
-mutation {
-  createUser(
-    createUserInput: {
-      name: "John Doe"
-      email: "john@example.com"
-      password: "password123"
-    }
-  ) {
+# Get current user (requires authentication)
+query {
+  me {
     id
     name
     email
+    role
   }
 }
 
-# Get all users (cached)
+# Get all users (requires ADMIN role)
 query {
   users {
     id
@@ -91,7 +139,7 @@ query {
   }
 }
 
-# Get user by ID (cached)
+# Get user by ID (requires ADMIN role)
 query {
   user(id: 1) {
     id
@@ -100,7 +148,7 @@ query {
   }
 }
 
-# Update user
+# Update user (requires ADMIN role)
 mutation {
   updateUser(
     id: 1
@@ -112,7 +160,16 @@ mutation {
   }
 }
 
-# Delete user
+# Update my profile (requires authentication)
+mutation {
+  updateMyProfile(updateUserInput: { name: "My Updated Name" }) {
+    id
+    name
+    email
+  }
+}
+
+# Delete user (requires ADMIN role)
 mutation {
   deleteUser(id: 1) {
     id
@@ -122,10 +179,10 @@ mutation {
 }
 ```
 
-### 4. Test Post Operations (with Cache)
+### 4. Test Post Operations (with Authentication)
 
 ```graphql
-# Create post
+# Create post (requires authentication)
 mutation {
   createPost(
     createPostInput: {
@@ -144,7 +201,7 @@ mutation {
   }
 }
 
-# Get all posts (cached)
+# Get all posts (public - no authentication required)
 query {
   posts {
     id
@@ -161,7 +218,16 @@ query {
   }
 }
 
-# Get post by ID (cached)
+# Get my posts (requires authentication)
+query {
+  myPosts {
+    id
+    title
+    content
+  }
+}
+
+# Get post by ID (public - no authentication required)
 query {
   post(id: 1) {
     id
@@ -176,6 +242,68 @@ query {
       content
     }
   }
+}
+
+# Update post (requires authentication + ownership or ADMIN role)
+mutation {
+  updatePost(
+    id: 1
+    updatePostInput: { title: "Updated Title", content: "Updated content" }
+  ) {
+    id
+    title
+    content
+  }
+}
+
+# Delete post (requires authentication + ownership or ADMIN role)
+mutation {
+  removePost(id: 1)
+}
+```
+
+### 5. Test Category Operations (with Authentication)
+
+```graphql
+# Create category (requires ADMIN role)
+mutation {
+  createCategory(
+    createCategoryInput: {
+      name: "Technology"
+      slug: "technology"
+      description: "Technology related posts"
+    }
+  ) {
+    id
+    name
+    slug
+  }
+}
+
+# Get all categories (public - no authentication required)
+query {
+  categories {
+    id
+    name
+    slug
+  }
+}
+
+# Update category (requires ADMIN role)
+mutation {
+  updateCategory(
+    id: 1
+    updateCategoryInput: { name: "Tech", description: "Updated description" }
+  ) {
+    id
+    name
+    slug
+  }
+}
+
+# Delete category (requires ADMIN role)
+mutation {
+  removeCategory(id: 1)
 }
 ```
 
@@ -224,11 +352,13 @@ mutation {
 # First request (cache miss - slower)
 curl -X POST http://localhost:3000/graphql \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -d '{"query": "query { user(id: 1) { id name email } }"}'
 
 # Second request (cache hit - faster)
 curl -X POST http://localhost:3000/graphql \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -d '{"query": "query { user(id: 1) { id name email } }"}'
 ```
 
@@ -303,6 +433,24 @@ docker logs -f <container-name>
 
 ## 🔧 Troubleshooting
 
+### Authentication Issues
+
+1. **"User not authenticated"**:
+
+   - Đảm bảo đã login và có JWT token
+   - Kiểm tra token có hợp lệ không
+   - Thêm header `Authorization: Bearer YOUR_TOKEN`
+
+2. **"User with role USER is not authorized"**:
+
+   - Endpoint yêu cầu ADMIN role
+   - Tạo user với ADMIN role hoặc sử dụng admin account
+
+3. **"Invalid token"**:
+   - Token đã hết hạn (24h)
+   - Token không đúng format
+   - Login lại để lấy token mới
+
 ### Redis Connection Issues
 
 1. **Connection refused**: Check if Redis container is running
@@ -359,25 +507,37 @@ docker exec -it redis-server redis-cli -a duc0044 monitor
 
 ## 🎯 Best Practices
 
-1. **Cache Strategy**:
+1. **Authentication Strategy**:
+
+   - Luôn sử dụng JWT tokens cho authentication
+   - Set token expiration (24h default)
+   - Validate tokens on every protected request
+
+2. **Authorization Strategy**:
+
+   - Sử dụng role-based access control (RBAC)
+   - Kiểm tra quyền truy cập ở resolver level
+   - Implement ownership checks cho user-specific data
+
+3. **Cache Strategy**:
 
    - Cache frequently accessed data
    - Set appropriate TTL
    - Invalidate cache on data changes
 
-2. **Key Naming**:
+4. **Key Naming**:
 
    - Use consistent naming convention
    - Include entity type and ID
    - Use prefixes for organization
 
-3. **Error Handling**:
+5. **Error Handling**:
 
    - Always handle Redis connection errors
    - Fallback to database if cache fails
    - Log cache operations for debugging
 
-4. **Performance**:
+6. **Performance**:
    - Monitor cache hit ratio
    - Optimize cache key patterns
    - Use appropriate data structures
