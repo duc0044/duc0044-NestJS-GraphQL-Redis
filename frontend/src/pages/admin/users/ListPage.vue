@@ -35,42 +35,8 @@
       <template v-slot:body-cell-actions="props">
         <q-td :props="props">
           <q-btn-group flat>
-            <q-btn
-              flat
-              round
-              color="primary"
-              icon="edit"
-              size="sm"
-              @click="editUser(props.row)"
-              :disable="props.row.id === currentUser?.id"
-            >
+            <q-btn flat round color="primary" icon="edit" size="sm" @click="editUser(props.row)">
               <q-tooltip>Sửa người dùng</q-tooltip>
-            </q-btn>
-
-            <q-btn
-              flat
-              round
-              color="secondary"
-              icon="admin_panel_settings"
-              size="sm"
-              v-if="props.row.role === 'USER'"
-              @click="promoteToAdmin(props.row)"
-              :disable="props.row.id === currentUser?.id"
-            >
-              <q-tooltip>Thăng cấp thành Admin</q-tooltip>
-            </q-btn>
-
-            <q-btn
-              flat
-              round
-              color="orange"
-              icon="person"
-              size="sm"
-              v-if="props.row.role === 'ADMIN'"
-              @click="demoteToUser(props.row)"
-              :disable="props.row.id === currentUser?.id"
-            >
-              <q-tooltip>Hạ cấp thành User</q-tooltip>
             </q-btn>
 
             <q-btn
@@ -80,7 +46,6 @@
               icon="delete"
               size="sm"
               @click="deleteUser(props.row)"
-              :disable="props.row.id === currentUser?.id"
             >
               <q-tooltip>Xóa người dùng</q-tooltip>
             </q-btn>
@@ -89,50 +54,26 @@
       </template>
     </q-table>
 
-    <q-dialog v-model="addUserDialog">
-      <q-card style="min-width: 400px">
-        <q-card-section>
-          <div class="text-h6">Thêm người dùng</div>
-        </q-card-section>
-        <q-card-section>
-          <q-input v-model="newUser.email" label="Email" type="email" />
-          <q-input v-model="newUser.username" label="Tên người dùng" />
-          <q-input v-model="newUser.password" label="Mật khẩu" type="password" />
-          <q-select v-model="newUser.role" :options="['USER', 'ADMIN']" label="Vai trò" />
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat label="Hủy" v-close-popup />
-          <q-btn color="primary" label="Thêm" @click="submitAddUser" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <!-- Add User Dialog -->
+    <AddUserDialog v-model="addUserDialog" :on-submit="submitAddUser" />
 
-    <q-dialog v-model="updateUserDialog">
-      <q-card style="min-width: 400px" v-if="editingUser">
-        <q-card-section>
-          <div class="text-h6">Cập nhật người dùng</div>
-        </q-card-section>
-        <q-card-section>
-          <q-input v-model="editingUser.email" label="Email" type="email" />
-          <q-input v-model="editingUser.username" label="Tên người dùng" />
-          <q-select v-model="editingUser.role" :options="['USER', 'ADMIN']" label="Vai trò" />
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat label="Hủy" v-close-popup />
-          <q-btn color="primary" label="Cập nhật" @click="submitUpdateUser" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <!-- Update User Dialog -->
+    <UpdateUserDialog
+      v-model="updateUserDialog"
+      :user="editingUser"
+      :on-submit="submitUpdateUser"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onActivated } from 'vue';
+import { ref } from 'vue';
 import { useMeta } from 'quasar';
 import { useQuasar } from 'quasar';
-import { useQuery, useMutation } from '@vue/apollo-composable';
-import gql from 'graphql-tag';
-import { useAuthStore } from '../../../stores/auth';
+import { useUsers } from 'src/composables/useUsers';
+import type { User } from 'src/composables/useUsers';
+import AddUserDialog from 'src/components/users/AddUserDialog.vue';
+import UpdateUserDialog from 'src/components/users/UpdateUserDialog.vue';
 
 useMeta({
   title: 'Danh sách người dùng',
@@ -140,77 +81,18 @@ useMeta({
 });
 
 const $q = useQuasar();
-const authStore = useAuthStore();
 
-// Get current user
-const currentUser = computed(() => authStore.user.value);
+const {
+  loading,
+  users,
+  pagination,
+  deleteUser,
+  onRequest,
+  refetchUsers,
+  createUserMutation,
+  updateUserMutation,
+} = useUsers();
 
-// GraphQL queries and mutations
-const GET_USERS = gql`
-  query GetUsers {
-    users {
-      id
-      username
-      email
-      role
-    }
-  }
-`;
-
-const PROMOTE_TO_ADMIN = gql`
-  mutation UpdateUser($updateUserId: Int!, $updateUserInput: UpdateUserInput!) {
-    updateUser(id: $updateUserId, updateUserInput: $updateUserInput) {
-      id
-      username
-      email
-      role
-    }
-  }
-`;
-
-const DELETE_USER = gql`
-  mutation RemoveUser($removeUserId: Int!) {
-    removeUser(id: $removeUserId)
-  }
-`;
-
-const CREATE_USER = gql`
-  mutation CreateUser($createUserInput: CreateUserInput!) {
-    createUser(createUserInput: $createUserInput) {
-      id
-      username
-      email
-      role
-    }
-  }
-`;
-
-const UPDATE_USER = gql`
-  mutation UpdateUser($updateUserId: Int!, $updateUserInput: UpdateUserInput!) {
-    updateUser(id: $updateUserId, updateUserInput: $updateUserInput) {
-      id
-      username
-      email
-      role
-      __typename
-    }
-  }
-`;
-
-// Reactive data
-const loading = ref(false);
-const users = ref([]);
-
-// Pagination
-const pagination = ref({
-  sortBy: 'username',
-  descending: false,
-  page: 1,
-  rowsPerPage: 10,
-  rowsNumber: 0,
-});
-
-// Table columns
 const columns = ref([
   {
     name: 'username',
@@ -246,152 +128,29 @@ const columns = ref([
   },
 ]);
 
-// GraphQL operations
-const {
-  result: usersResult,
-  loading: usersLoading,
-  refetch: refetchUsers,
-} = useQuery(
-  GET_USERS,
-  {},
-  {
-    fetchPolicy: 'network-only',
-  },
-);
-
-const { mutate: promoteToAdminMutation } = useMutation(PROMOTE_TO_ADMIN);
-const { mutate: deleteUserMutation } = useMutation(DELETE_USER);
-const { mutate: createUserMutation } = useMutation(CREATE_USER);
-const { mutate: updateUserMutation } = useMutation(UPDATE_USER);
-
-// Watch for query results
-import { watch } from 'vue';
-watch(usersResult, (newResult) => {
-  if (newResult?.users) {
-    users.value = newResult.users;
-    pagination.value.rowsNumber = newResult.users.length;
-  }
-});
-
-watch(usersLoading, (newLoading) => {
-  loading.value = newLoading;
-});
-
-// Actions
-const editUser = (user: { id: number; username: string; email: string; role: string }) => {
-  openUpdateUserDialog(user);
-};
-
-const promoteToAdmin = async (user: { id: number; username: string }) => {
-  try {
-    await promoteToAdminMutation({
-      updateUserId: Number(user.id),
-      updateUserInput: { role: 'ADMIN' },
-    });
-    await refetchUsers();
-    $q.notify({
-      type: 'positive',
-      message: `Đã thăng cấp ${user.username} thành Admin`,
-      position: 'top',
-    });
-  } catch (err) {
-    console.error('Error promoting user:', err);
-    $q.notify({
-      type: 'negative',
-      message: 'Có lỗi xảy ra khi thăng cấp người dùng',
-      position: 'top',
-    });
-  }
-};
-
-const demoteToUser = async (user: { id: number; username: string }) => {
-  try {
-    await promoteToAdminMutation({
-      updateUserId: Number(user.id),
-      updateUserInput: { role: 'USER' },
-    });
-    await refetchUsers();
-    $q.notify({
-      type: 'positive',
-      message: `Đã hạ cấp ${user.username} thành User`,
-      position: 'top',
-    });
-  } catch (err) {
-    console.error('Error demoting user:', err);
-    $q.notify({
-      type: 'negative',
-      message: 'Có lỗi xảy ra khi hạ cấp người dùng',
-      position: 'top',
-    });
-  }
-};
-
-const deleteUser = (user: { id: number; username: string }) => {
-  $q.dialog({
-    title: 'Xác nhận xóa',
-    message: `Bạn có chắc chắn muốn xóa người dùng "${user.username}"?`,
-    cancel: true,
-    persistent: true,
-  }).onOk(() => {
-    void (async () => {
-      try {
-        await deleteUserMutation({
-          removeUserId: Number(user.id),
-        });
-        await refetchUsers();
-        $q.notify({
-          type: 'positive',
-          message: `Đã xóa người dùng ${user.username}`,
-          position: 'top',
-        });
-      } catch (err) {
-        console.error('Error deleting user:', err);
-        $q.notify({
-          type: 'negative',
-          message: 'Có lỗi xảy ra khi xóa người dùng',
-          position: 'top',
-        });
-      }
-    })();
-  });
-};
-
-const onRequest = (props: {
-  pagination: {
-    sortBy: string;
-    descending: boolean;
-    page: number;
-    rowsPerPage: number;
-    rowsNumber?: number;
-  };
-  filter?: unknown;
-  getCellValue: (col: unknown, row: unknown) => unknown;
-}) => {
-  pagination.value = {
-    ...props.pagination,
-    rowsNumber: props.pagination.rowsNumber || 0,
-  };
-};
-
 const addUserDialog = ref(false);
-const newUser = ref({
-  email: '',
-  username: '',
-  password: '',
-  role: 'USER',
-});
+const updateUserDialog = ref(false);
+const editingUser = ref<User | null>(null);
+
+const editUser = (user: User) => {
+  editingUser.value = user;
+  updateUserDialog.value = true;
+};
 
 const openAddUserDialog = () => {
-  newUser.value = { email: '', username: '', password: '', role: 'USER' };
   addUserDialog.value = true;
 };
 
-const submitAddUser = async () => {
+const submitAddUser = async (userData: {
+  email: string;
+  username: string;
+  password: string;
+  role: string;
+}) => {
   try {
     await createUserMutation({
-      createUserInput: { ...newUser.value },
+      createUserInput: userData,
     });
-    addUserDialog.value = false;
     await refetchUsers();
     $q.notify({
       type: 'positive',
@@ -400,41 +159,20 @@ const submitAddUser = async () => {
     });
   } catch (err) {
     console.error(err);
-    $q.notify({
-      type: 'negative',
-      message: 'Có lỗi khi thêm người dùng',
-      position: 'top',
-    });
+    throw err;
   }
 };
 
-const updateUserDialog = ref(false);
-type User = {
-  id: number;
-  email: string;
-  username: string;
-  role: string;
-};
-
-const editingUser = ref<User | null>(null);
-
-const openUpdateUserDialog = (user: User) => {
-  editingUser.value = { ...user };
-  updateUserDialog.value = true;
-};
-
-const submitUpdateUser = async () => {
-  if (!editingUser.value) return;
+const submitUpdateUser = async (user: User) => {
   try {
     await updateUserMutation({
-      updateUserId: Number(editingUser.value.id),
+      updateUserId: Number(user.id),
       updateUserInput: {
-        email: editingUser.value.email,
-        username: editingUser.value.username,
-        role: editingUser.value.role,
+        email: user.email,
+        username: user.username,
+        role: user.role,
       },
     });
-    updateUserDialog.value = false;
     await refetchUsers();
     $q.notify({
       type: 'positive',
@@ -443,17 +181,9 @@ const submitUpdateUser = async () => {
     });
   } catch (err) {
     console.error(err);
-    $q.notify({
-      type: 'negative',
-      message: 'Có lỗi khi cập nhật người dùng',
-      position: 'top',
-    });
+    throw err;
   }
 };
-
-onActivated(() => {
-  void refetchUsers();
-});
 </script>
 
 <style scoped>

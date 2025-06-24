@@ -91,6 +91,24 @@ const linksList: EssentialLinkProps[] = [
     icon: 'list',
     link: '#/admin/users/list',
   },
+  {
+    title: 'Categories',
+    caption: 'View all categories',
+    icon: 'list',
+    link: '#/admin/categories/list',
+  },
+  {
+    title: 'Tags',
+    caption: 'View all tags',
+    icon: 'list',
+    link: '#/admin/tags/list',
+  },
+  {
+    title: 'Blog',
+    caption: 'View all blog',
+    icon: 'list',
+    link: '#/admin/blog/list',
+  },
 ];
 
 const leftDrawerOpen = ref(false);

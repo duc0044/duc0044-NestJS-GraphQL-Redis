@@ -8,6 +8,11 @@ const routes: RouteRecordRaw[] = [
     children: [
       { path: '', redirect: '/admin/users/list' },
       { path: 'users/list', component: () => import('pages/admin/users/ListPage.vue') },
+      { path: 'categories/list', component: () => import('pages/admin/categories/ListPage.vue') },
+      { path: 'tags/list', component: () => import('pages/admin/tag/ListPage.vue') },
+      { path: 'blog/list', component: () => import('pages/admin/blog/ListPage.vue') },
+      { path: 'blog/add', component: () => import('pages/admin/blog/AddPage.vue') },
+      { path: 'blog/update/:id', component: () => import('pages/admin/blog/updatePage.vue') },
     ],
   },
   {

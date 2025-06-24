@@ -8,6 +8,7 @@ import {
   OneToMany,
   ManyToMany,
   JoinTable,
+  JoinColumn,
 } from 'typeorm';
 import { ObjectType, Field, ID } from '@nestjs/graphql';
 import { User } from './user.entity';
@@ -59,7 +60,8 @@ export class Post {
   user: User;
 
   @Field(() => Category, { nullable: true })
-  @ManyToOne(() => Category, (category) => category.posts)
+  @ManyToOne(() => Category, (category) => category.posts, { eager: true })
+  @JoinColumn({ name: 'category_id' })
   category: Category;
 
   @Field(() => [Comment], { nullable: true })

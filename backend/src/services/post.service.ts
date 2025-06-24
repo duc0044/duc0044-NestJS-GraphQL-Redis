@@ -18,7 +18,7 @@ export class PostService {
     @InjectRepository(Tag)
     private tagRepository: Repository<Tag>,
     private readonly redisService: RedisService,
-  ) {}
+  ) { }
 
   async create(
     createPostInput: CreatePostInput,
@@ -56,6 +56,39 @@ export class PostService {
     // Clear cache after creating new post
     await this.clearCache();
 
+    // Update cache for all posts
+    const posts = await this.postRepository.find({
+      relations: ['user', 'category', 'comments', 'tags'],
+      order: { created_at: 'DESC' },
+    });
+    await this.redisService.set('posts:all', JSON.stringify(posts), 300);
+
+    // Update cache for category
+    if (category_id) {
+      const postsByCategory = await this.postRepository.find({
+        where: { category_id },
+        relations: ['user', 'category', 'comments', 'tags'],
+        order: { created_at: 'DESC' },
+      });
+      await this.redisService.set(
+        `posts:category:${category_id}`,
+        JSON.stringify(postsByCategory),
+        300,
+      );
+    }
+
+    // Update cache for user
+    const postsByUser = await this.postRepository.find({
+      where: { user_id: userId },
+      relations: ['user', 'category', 'comments', 'tags'],
+      order: { created_at: 'DESC' },
+    });
+    await this.redisService.set(
+      `posts:user:${userId}`,
+      JSON.stringify(postsByUser),
+      300,
+    );
+
     return savedPost;
   }
 
@@ -65,7 +98,7 @@ export class PostService {
     const cached = await this.redisService.get(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return JSON.parse(cached) as Post[];
     }
 
     const posts = await this.postRepository.find({
@@ -85,7 +118,7 @@ export class PostService {
     const cached = await this.redisService.get(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return JSON.parse(cached) as Post;
     }
 
     const post = await this.postRepository.findOne({
@@ -109,7 +142,7 @@ export class PostService {
     const cached = await this.redisService.get(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return JSON.parse(cached) as Post;
     }
 
     const post = await this.postRepository.findOne({
@@ -132,7 +165,7 @@ export class PostService {
     const cached = await this.redisService.get(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return JSON.parse(cached) as Post[];
     }
 
     const posts = await this.postRepository.find({
@@ -152,7 +185,7 @@ export class PostService {
     const cached = await this.redisService.get(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return JSON.parse(cached) as Post[];
     }
 
     const posts = await this.postRepository.find({
@@ -212,6 +245,39 @@ export class PostService {
     // Clear cache after deletion
     await this.clearCache();
 
+    // Update cache for all posts
+    const posts = await this.postRepository.find({
+      relations: ['user', 'category', 'comments', 'tags'],
+      order: { created_at: 'DESC' },
+    });
+    await this.redisService.set('posts:all', JSON.stringify(posts), 300);
+
+    // Update cache for category
+    if (post.category_id) {
+      const postsByCategory = await this.postRepository.find({
+        where: { category_id: post.category_id },
+        relations: ['user', 'category', 'comments', 'tags'],
+        order: { created_at: 'DESC' },
+      });
+      await this.redisService.set(
+        `posts:category:${post.category_id}`,
+        JSON.stringify(postsByCategory),
+        300,
+      );
+    }
+
+    // Update cache for user
+    const postsByUser = await this.postRepository.find({
+      where: { user_id: post.user_id },
+      relations: ['user', 'category', 'comments', 'tags'],
+      order: { created_at: 'DESC' },
+    });
+    await this.redisService.set(
+      `posts:user:${post.user_id}`,
+      JSON.stringify(postsByUser),
+      300,
+    );
+
     return true;
   }
 
@@ -220,7 +286,7 @@ export class PostService {
     const cached = await this.redisService.get(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return JSON.parse(cached) as Post[];
     }
 
     const posts = await this.postRepository

@@ -15,7 +15,7 @@ export class CategoryService {
     @InjectRepository(Category)
     private categoryRepository: Repository<Category>,
     private readonly redisService: RedisService,
-  ) {}
+  ) { }
 
   async create(createCategoryInput: CreateCategoryInput): Promise<Category> {
     const { name, slug } = createCategoryInput;
@@ -34,8 +34,8 @@ export class CategoryService {
     const category = this.categoryRepository.create(createCategoryInput);
     const savedCategory = await this.categoryRepository.save(category);
 
-    // Clear cache after creating new category
-    await this.clearCache();
+    // Update cache with new category data
+    await this.updateCache(savedCategory);
 
     return savedCategory;
   }
@@ -46,7 +46,7 @@ export class CategoryService {
     const cached = await this.redisService.get(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return JSON.parse(cached) as Category[];
     }
 
     // If not in cache, get from database
@@ -55,7 +55,11 @@ export class CategoryService {
     });
 
     // Cache the result for 5 minutes
-    await this.redisService.set(cacheKey, JSON.stringify(categories), 300);
+    await this.redisService.set(
+      'categories:all',
+      JSON.stringify(categories),
+      300,
+    );
 
     return categories;
   }
@@ -66,7 +70,7 @@ export class CategoryService {
     const cached = await this.redisService.get(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return JSON.parse(cached) as Category;
     }
 
     const category = await this.categoryRepository.findOne({
@@ -90,7 +94,7 @@ export class CategoryService {
     const cached = await this.redisService.get(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return JSON.parse(cached) as Category;
     }
 
     const category = await this.categoryRepository.findOne({
@@ -136,8 +140,8 @@ export class CategoryService {
     Object.assign(category, updateCategoryInput);
     const updatedCategory = await this.categoryRepository.save(category);
 
-    // Clear cache after update
-    await this.clearCache();
+    // Update cache with updated category data
+    await this.updateCache(updatedCategory);
 
     return updatedCategory;
   }
@@ -146,10 +150,43 @@ export class CategoryService {
     const category = await this.findOne(id);
     await this.categoryRepository.remove(category);
 
-    // Clear cache after deletion
-    await this.clearCache();
+    // Update cache after deletion - refresh the categories list
+    await this.refreshCategoriesCache();
 
     return true;
+  }
+
+  private async updateCache(category: Category): Promise<void> {
+    // Update individual category cache
+    const categoryKey = `category:${category.id}`;
+    const slugKey = `category:slug:${category.slug}`;
+
+    await this.redisService.set(categoryKey, JSON.stringify(category), 300);
+    await this.redisService.set(slugKey, JSON.stringify(category), 300);
+
+    // Update categories list cache
+    const allCategories = await this.categoryRepository.find({
+      relations: ['posts'],
+    });
+    await this.redisService.set(
+      'categories:all',
+      JSON.stringify(allCategories),
+      300,
+    );
+  }
+
+  private async refreshCategoriesCache(): Promise<void> {
+    // Get fresh categories list from database
+    const allCategories = await this.categoryRepository.find({
+      relations: ['posts'],
+    });
+
+    // Update the categories list cache
+    await this.redisService.set(
+      'categories:all',
+      JSON.stringify(allCategories),
+      300,
+    );
   }
 
   private async clearCache(): Promise<void> {
