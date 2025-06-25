@@ -20,7 +20,9 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/PublicLayout.vue'),
     meta: { requiresAuth: false },
     children: [
-      { path: '', component: () => import('pages/HomePage.vue') },
+      { path: '', component: () => import('pages/public/HomePage.vue') },
+      { path: 'blog/:id', component: () => import('pages/public/DetailPage.vue') },
+      { path: 'blog', component: () => import('pages/public/BlogPage.vue') },
     ],
   },
   {

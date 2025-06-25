@@ -1,7 +1,11 @@
-import { ref, watch } from 'vue';
+import { ref, watch, computed, readonly } from 'vue';
 import { useQuasar } from 'quasar';
 import { useQuery, useMutation } from '@vue/apollo-composable';
 import gql from 'graphql-tag';
+
+interface User {
+  username: string;
+}
 
 export interface Post {
   id: string;
@@ -9,11 +13,10 @@ export interface Post {
   slug: string;
   content: string;
   thumbnail: string;
+  user?: User;
   category: Category;
   tags: Tag[];
 }
-
-
 
 interface Category {
   id: string;
@@ -34,14 +37,12 @@ interface PostByIdData {
 }
 
 export interface CreatePostInput {
-
   title: string;
   slug: string;
   content: string;
   thumbnail: string;
   category_id: number;
   tag_ids: number[];
-
 }
 
 const GET_POSTS = gql`
@@ -60,28 +61,31 @@ const GET_POSTS = gql`
         id
         name
       }
+      user {
+        username
+      }
     }
   }
 `;
 
 const UPDATE_POST = gql`
-  mutation UpdatePost($updatePostId: ID!, $updatePostInput: UpdatePostInput!) {
-    updatePost(id: $updatePostId, input: $updatePostInput) {
+ mutation UpdatePost($id: Int!, $updatePostInput: UpdatePostInput!) {
+  updatePost(id: $id, updatePostInput: $updatePostInput) {
+    id
+    title
+    slug
+    content
+    category {
       id
-      title
-      slug
-      content
-      thumbnail
-      category {
-        id
-        name
-      }
-      tags {
-        id
-        name
-      }
+      name
+    }
+    tags {
+      id
+      name
     }
   }
+}
+
 `;
 
 const DELETE_POST = gql`
@@ -109,23 +113,14 @@ const GET_POSTS_BY_ID = gql`
         id
         name
       }
-    category_id
-    content
-    created_at
-    id
-    slug
+      slug
+      content
+      title
     tags {
       id
       name
     }
     thumbnail
-    title
-    updated_at
-    user {
-      id
-      username
-    }
-    user_id
   }
 }
 `;
@@ -148,8 +143,6 @@ export function usePosts() {
     }
   }, { immediate: true });
 
-
-
   const { mutate: createPostMutation } = useMutation(CREATE_POST);
   const { mutate: updatePostMutation } = useMutation(UPDATE_POST);
   const { mutate: deletePostMutation } = useMutation(DELETE_POST);
@@ -161,7 +154,17 @@ export function usePosts() {
   };
 
   const updatePost = async (post: Post) => {
-    await updatePostMutation({ updatePostId: post.id, updatePostInput: post });
+    await updatePostMutation({
+      id: Number(post.id),
+      updatePostInput: {
+        title: post.title,
+        slug: post.slug,
+        content: post.content,
+        thumbnail: post.thumbnail,
+        category_id: Number(post.category.id),
+        tag_ids: post.tags.map(tag => Number(tag.id)),
+      },
+    });
     await refetch();
     $q.notify({ type: 'positive', message: 'Cập nhật bài viết thành công!', position: 'top' });
   };
@@ -203,17 +206,6 @@ export function usePosts() {
     };
   };
 
-  const getPostById = (postId: string) => {
-    const { result, loading, error } = useQuery<PostByIdData>(GET_POSTS_BY_ID, {
-      postId: Number(postId),
-    });
-    return {
-      post: result.value?.post,
-      loading: loading.value,
-      error: error.value,
-    };
-  };
-
   return {
     posts,
     pagination,
@@ -224,6 +216,18 @@ export function usePosts() {
     createPost,
     updatePost,
     deletePost,
-    getPostById,
+  };
+}
+
+// Separate composable for getting a single post by ID
+export function usePostById(postId: number) {
+  const { result, loading, error } = useQuery<PostByIdData>(GET_POSTS_BY_ID, {
+    postId: Number(postId),
+  });
+
+  return {
+    post: computed(() => result.value?.post),
+    loading: readonly(loading),
+    error: readonly(error),
   };
 }

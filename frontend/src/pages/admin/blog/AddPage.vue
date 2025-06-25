@@ -129,7 +129,17 @@
 
         <!-- Submit button -->
         <div class="row q-mt-xl">
-          <div class="col-12 flex justify-center justify-md-end">
+          <div class="col-12 flex justify-center justify-md-end gap-2">
+            <q-btn
+              color="grey-7"
+              label="Hủy"
+              icon="cancel"
+              unelevated
+              rounded
+              size="md"
+              class="q-px-xl shadow-2 q-mr-sm"
+              @click="$router.back()"
+            />
             <q-btn
               type="submit"
               color="primary"
@@ -138,8 +148,8 @@
               icon="send"
               unelevated
               rounded
-              size="lg"
-              class="q-px-xl shadow-2 full-width full-width-md-auto"
+              size="md"
+              class="q-px-xl shadow-2"
             />
           </div>
         </div>

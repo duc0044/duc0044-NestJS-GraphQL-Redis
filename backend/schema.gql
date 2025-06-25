@@ -107,7 +107,7 @@ type Post {
   thumbnail: String
   title: String!
   updated_at: DateTime!
-  user: User!
+  user: User
   user_id: Float!
 }
 

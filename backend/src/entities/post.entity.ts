@@ -55,12 +55,13 @@ export class Post {
   @UpdateDateColumn()
   updated_at: Date;
 
-  @Field(() => User)
+  @Field(() => User, { nullable: true })
   @ManyToOne(() => User, (user) => user.posts)
+  @JoinColumn({ name: 'user_id' })
   user: User;
 
   @Field(() => Category, { nullable: true })
-  @ManyToOne(() => Category, (category) => category.posts, { eager: true })
+  @ManyToOne(() => Category, (category) => category.posts)
   @JoinColumn({ name: 'category_id' })
   category: Category;
 

@@ -7,6 +7,12 @@ export interface User {
   role: 'USER' | 'ADMIN'
 }
 
+export interface RegisterData {
+  username: string
+  email: string
+  password: string
+}
+
 interface AuthState {
   user: User | null
   token: string | null
@@ -23,7 +29,7 @@ const state = reactive<AuthState>({
 const initializeAuth = () => {
   const token = localStorage.getItem('token')
   const userStr = localStorage.getItem('user') || sessionStorage.getItem('user')
-  
+
   if (token && userStr) {
     try {
       const user = JSON.parse(userStr) as User
@@ -44,11 +50,29 @@ const initializeAuth = () => {
 }
 
 export const useAuthStore = () => {
+  const register = async (data: RegisterData): Promise<void> => {
+    const response = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.message || 'Registration failed')
+    }
+
+    // Registration successful, but don't log in automatically
+    // User needs to login separately
+  }
+
   const login = (user: User, token: string, rememberMe: boolean = false) => {
     state.user = user
     state.token = token
     state.isAuthenticated = true
-    
+
     // Store in appropriate storage
     localStorage.setItem('token', token)
     if (rememberMe) {
@@ -62,7 +86,7 @@ export const useAuthStore = () => {
     state.user = null
     state.token = null
     state.isAuthenticated = false
-    
+
     // Clear storage
     localStorage.removeItem('token')
     localStorage.removeItem('user')
@@ -71,7 +95,7 @@ export const useAuthStore = () => {
 
   const updateUser = (user: User) => {
     state.user = user
-    
+
     // Update storage
     const userStr = localStorage.getItem('user') || sessionStorage.getItem('user')
     if (userStr) {
@@ -85,8 +109,9 @@ export const useAuthStore = () => {
     user: toRef(state, 'user'),
     token: toRef(state, 'token'),
     isAuthenticated: toRef(state, 'isAuthenticated'),
-    
+
     // Actions
+    register,
     login,
     logout,
     updateUser,
@@ -95,4 +120,4 @@ export const useAuthStore = () => {
 }
 
 // Initialize auth on module load
-initializeAuth() 
+initializeAuth()

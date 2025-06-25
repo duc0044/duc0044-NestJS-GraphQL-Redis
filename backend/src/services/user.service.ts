@@ -17,7 +17,7 @@ export class UserService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private readonly redisService: RedisService,
-  ) {}
+  ) { }
 
   async create(createUserInput: CreateUserInput): Promise<User> {
     const { username, email, password, role } = createUserInput;
@@ -235,6 +235,21 @@ export class UserService {
 
     return { user, token };
   }
+
+  // async refreshToken(userId: number): Promise<string> {
+  //   const user = await this.findOne(userId);
+  //   const payload = {
+  //     sub: user.id,
+  //     email: user.email,
+  //     role: user.role,
+  //   };
+  //   const token = jwt.sign(
+  //     payload,
+  //     process.env.JWT_SECRET || 'your-secret-key',
+  //     { expiresIn: '1h' },
+  //   );
+  //   return token;
+  // }
 
   // Role-based methods
   async isAdmin(userId: number): Promise<boolean> {

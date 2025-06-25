@@ -61,7 +61,7 @@ export class PostService {
       relations: ['user', 'category', 'comments', 'tags'],
       order: { created_at: 'DESC' },
     });
-    await this.redisService.set('posts:all', JSON.stringify(posts), 300);
+    await this.redisService.set('posts:all', this.serializePosts(posts), 300);
 
     // Update cache for category
     if (category_id) {
@@ -72,7 +72,7 @@ export class PostService {
       });
       await this.redisService.set(
         `posts:category:${category_id}`,
-        JSON.stringify(postsByCategory),
+        this.serializePosts(postsByCategory),
         300,
       );
     }
@@ -85,7 +85,7 @@ export class PostService {
     });
     await this.redisService.set(
       `posts:user:${userId}`,
-      JSON.stringify(postsByUser),
+      this.serializePosts(postsByUser),
       300,
     );
 
@@ -107,7 +107,7 @@ export class PostService {
     });
 
     // Cache the result for 5 minutes
-    await this.redisService.set(cacheKey, JSON.stringify(posts), 300);
+    await this.redisService.set(cacheKey, this.serializePosts(posts), 300);
 
     return posts;
   }
@@ -129,9 +129,8 @@ export class PostService {
     if (!post) {
       throw new NotFoundException(`Post with ID ${id} not found`);
     }
-
     // Cache the result for 5 minutes
-    await this.redisService.set(cacheKey, JSON.stringify(post), 300);
+    await this.redisService.set(cacheKey, this.serializePost(post), 300);
 
     return post;
   }
@@ -155,7 +154,7 @@ export class PostService {
     }
 
     // Cache the result for 5 minutes
-    await this.redisService.set(cacheKey, JSON.stringify(post), 300);
+    await this.redisService.set(cacheKey, this.serializePost(post), 300);
 
     return post;
   }
@@ -175,7 +174,7 @@ export class PostService {
     });
 
     // Cache the result for 5 minutes
-    await this.redisService.set(cacheKey, JSON.stringify(posts), 300);
+    await this.redisService.set(cacheKey, this.serializePosts(posts), 300);
 
     return posts;
   }
@@ -195,7 +194,7 @@ export class PostService {
     });
 
     // Cache the result for 5 minutes
-    await this.redisService.set(cacheKey, JSON.stringify(posts), 300);
+    await this.redisService.set(cacheKey, this.serializePosts(posts), 300);
 
     return posts;
   }
@@ -235,6 +234,64 @@ export class PostService {
     // Clear cache after update
     await this.clearCache();
 
+    // Update cache for the specific post
+    const freshPost = await this.postRepository.findOne({
+      where: { id },
+      relations: ['user', 'category', 'comments', 'tags'],
+    });
+
+    if (freshPost) {
+      await this.redisService.set(
+        `post:${id}`,
+        this.serializePost(freshPost),
+        300,
+      );
+
+      // Update cache for slug if it changed
+      if (slug && slug !== post.slug) {
+        await this.redisService.set(
+          `post:slug:${slug}`,
+          this.serializePost(freshPost),
+          300,
+        );
+        // Remove old slug cache
+        await this.redisService.del(`post:slug:${post.slug}`);
+      }
+    }
+
+    // Update cache for all posts
+    const posts = await this.postRepository.find({
+      relations: ['user', 'category', 'comments', 'tags'],
+      order: { created_at: 'DESC' },
+    });
+    await this.redisService.set('posts:all', this.serializePosts(posts), 300);
+
+    // Update cache for category
+    if (category_id !== undefined) {
+      const postsByCategory = await this.postRepository.find({
+        where: { category_id },
+        relations: ['user', 'category', 'comments', 'tags'],
+        order: { created_at: 'DESC' },
+      });
+      await this.redisService.set(
+        `posts:category:${category_id}`,
+        this.serializePosts(postsByCategory),
+        300,
+      );
+    }
+
+    // Update cache for user
+    const postsByUser = await this.postRepository.find({
+      where: { user_id: post.user_id },
+      relations: ['user', 'category', 'comments', 'tags'],
+      order: { created_at: 'DESC' },
+    });
+    await this.redisService.set(
+      `posts:user:${post.user_id}`,
+      this.serializePosts(postsByUser),
+      300,
+    );
+
     return updatedPost;
   }
 
@@ -250,7 +307,7 @@ export class PostService {
       relations: ['user', 'category', 'comments', 'tags'],
       order: { created_at: 'DESC' },
     });
-    await this.redisService.set('posts:all', JSON.stringify(posts), 300);
+    await this.redisService.set('posts:all', this.serializePosts(posts), 300);
 
     // Update cache for category
     if (post.category_id) {
@@ -261,7 +318,7 @@ export class PostService {
       });
       await this.redisService.set(
         `posts:category:${post.category_id}`,
-        JSON.stringify(postsByCategory),
+        this.serializePosts(postsByCategory),
         300,
       );
     }
@@ -274,7 +331,7 @@ export class PostService {
     });
     await this.redisService.set(
       `posts:user:${post.user_id}`,
-      JSON.stringify(postsByUser),
+      this.serializePosts(postsByUser),
       300,
     );
 
@@ -301,7 +358,7 @@ export class PostService {
       .getMany();
 
     // Cache search results for 2 minutes (shorter TTL for search)
-    await this.redisService.set(cacheKey, JSON.stringify(posts), 120);
+    await this.redisService.set(cacheKey, this.serializePosts(posts), 120);
 
     return posts;
   }
@@ -311,5 +368,25 @@ export class PostService {
     if (keys.length > 0) {
       await this.redisService.del(...keys);
     }
+  }
+
+  private serializePost(post: Post): string {
+    return JSON.stringify(post, (key: string, value: unknown) => {
+      // Handle circular references
+      if (key === 'posts' && typeof value === 'object') {
+        return undefined; // Skip posts array to avoid circular reference
+      }
+      return value;
+    });
+  }
+
+  private serializePosts(posts: Post[]): string {
+    return JSON.stringify(posts, (key: string, value: unknown) => {
+      // Handle circular references
+      if (key === 'posts' && typeof value === 'object') {
+        return undefined; // Skip posts array to avoid circular reference
+      }
+      return value;
+    });
   }
 }

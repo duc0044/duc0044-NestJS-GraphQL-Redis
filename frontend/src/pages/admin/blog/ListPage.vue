@@ -54,6 +54,12 @@ const columns = [
     field: (row: Post) => row.tags?.map((t: { name: string }) => t.name).join(', '),
     align: 'left',
   },
+  {
+    name: 'user',
+    label: 'Người viết',
+    field: (row: Post) => row.user?.username || '',
+    align: 'left',
+  },
   { name: 'actions', label: 'Hành động', field: 'actions', align: 'right' },
 ];
 
