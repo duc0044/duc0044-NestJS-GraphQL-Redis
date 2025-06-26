@@ -9,6 +9,7 @@
         option-value="id"
         class="filter-item"
         outlined
+        @update:model-value="handleCategoryChange"
       />
       <q-select
         v-model="selectedTag"
@@ -40,7 +41,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { usePosts } from 'src/composables/usePosts';
+import { usePosts, usePostsByCategory } from 'src/composables/usePosts';
 import { useCategories } from 'src/composables/useCategories';
 import { useTags } from 'src/composables/useTags';
 import { ref } from 'vue';
@@ -56,6 +57,10 @@ const selectedTag = ref<string | null>(null);
 
 const handleClick = async (id: string) => {
   await router.push(`/blog/${id}`);
+};
+const handleCategoryChange = (categoryId: string) => {
+  const { posts } = usePostsByCategory(Number(categoryId));
+  console.log(posts);
 };
 </script>
 <style scoped>

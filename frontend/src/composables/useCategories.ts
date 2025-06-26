@@ -54,7 +54,6 @@ const DELETE_CATEGORY = gql`
     removeCategory(id: $removeCategoryId)
   }
 `
-
 export function useCategories() {
   const $q = useQuasar()
 

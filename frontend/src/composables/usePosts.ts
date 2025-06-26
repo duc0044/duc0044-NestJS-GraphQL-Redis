@@ -45,6 +45,10 @@ export interface CreatePostInput {
   tag_ids: number[];
 }
 
+interface PostsByCategoryData {
+  postsByCategory: Post[];
+}
+
 const GET_POSTS = gql`
   query GetPosts {
     posts {
@@ -125,6 +129,28 @@ const GET_POSTS_BY_ID = gql`
 }
 `;
 
+const GET_POSTS_BY_CATEGORY = gql`
+  query PostsByCategory($categoryId: Int!) {
+  postsByCategory(categoryId: $categoryId) {
+    category {
+      name
+    }
+    content
+    id
+    slug
+    tags {
+      name
+    }
+    thumbnail
+    title
+    user {
+      username
+    }
+  }
+}
+`;
+
+
 export function usePosts() {
   const $q = useQuasar();
   const posts = ref<Post[]>([]);
@@ -146,6 +172,8 @@ export function usePosts() {
   const { mutate: createPostMutation } = useMutation(CREATE_POST);
   const { mutate: updatePostMutation } = useMutation(UPDATE_POST);
   const { mutate: deletePostMutation } = useMutation(DELETE_POST);
+
+
 
   const createPost = async (post: CreatePostInput) => {
     await createPostMutation({ createPostInput: post });
@@ -231,3 +259,13 @@ export function usePostById(postId: number) {
     error: readonly(error),
   };
 }
+export function usePostsByCategory(categoryId: number) {
+  const { result, loading, error } = useQuery<PostsByCategoryData>(GET_POSTS_BY_CATEGORY, {
+    categoryId: Number(categoryId),
+  });
+  return {
+    posts: result.value?.postsByCategory,
+    loading: readonly(loading),
+    error: readonly(error),
+  };
+};
