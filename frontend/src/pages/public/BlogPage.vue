@@ -10,6 +10,7 @@
         class="filter-item"
         outlined
         @update:model-value="handleCategoryChange"
+        clearable
       />
       <q-select
         v-model="selectedTag"
@@ -19,10 +20,12 @@
         option-value="id"
         class="filter-item"
         outlined
+        @update:model-value="handleTagChange"
+        clearable
       />
     </div>
     <div class="grid">
-      <div v-for="post in posts" :key="post.id" class="card" @click="handleClick(post.id)">
+      <div v-for="post in filteredPosts" :key="post.id" class="card" @click="handleClick(post.id)">
         <img v-if="post.thumbnail" :src="post.thumbnail" alt="Thumbnail" class="thumbnail" />
 
         <div class="content">
@@ -41,10 +44,10 @@
   </div>
 </template>
 <script setup lang="ts">
-import { usePosts, usePostsByCategory } from 'src/composables/usePosts';
+import { usePosts, usePostsByCategory, usePostsByTag } from 'src/composables/usePosts';
 import { useCategories } from 'src/composables/useCategories';
 import { useTags } from 'src/composables/useTags';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -52,15 +55,41 @@ const { posts } = usePosts();
 const { categories } = useCategories();
 const { tags } = useTags();
 
-const selectedCategory = ref<string | null>(null);
-const selectedTag = ref<string | null>(null);
+// Type the selectedCategory properly
+const selectedCategory = ref<{ id: string; name: string } | null>(null);
+const selectedTag = ref<{ id: string; name: string } | null>(null);
+
+// Create a reactive categoryId for the composable
+const categoryId = computed(() => (selectedCategory.value ? Number(selectedCategory.value.id) : 0));
+const tagId = computed(() => (selectedTag.value ? Number(selectedTag.value.id) : 0));
+
+// Use the postsByCategory composable with reactive categoryId
+const { posts: postsByCategory } = usePostsByCategory(categoryId);
+const { posts: postsByTag } = usePostsByTag(tagId);
+
+// Computed property to get the appropriate posts
+const filteredPosts = computed(() => {
+  if (selectedCategory.value && postsByCategory.value.length > 0) {
+    return postsByCategory.value;
+  }
+  if (selectedTag.value && postsByTag.value.length > 0) {
+    return postsByTag.value;
+  }
+  return posts.value;
+});
 
 const handleClick = async (id: string) => {
   await router.push(`/blog/${id}`);
 };
-const handleCategoryChange = (categoryId: string) => {
-  const { posts } = usePostsByCategory(Number(categoryId));
-  console.log(posts);
+
+const handleCategoryChange = (category: { id: string; name: string } | null) => {
+  selectedCategory.value = category;
+  console.log('Selected category:', category);
+};
+
+const handleTagChange = (tag: { id: string; name: string } | null) => {
+  selectedTag.value = tag;
+  console.log('Selected tag:', tag);
 };
 </script>
 <style scoped>

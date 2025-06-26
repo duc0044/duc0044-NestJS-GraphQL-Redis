@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { ObjectType, Field, ID } from '@nestjs/graphql';
 import { User } from './user.entity';
@@ -32,11 +33,13 @@ export class Comment {
   @CreateDateColumn()
   created_at: Date;
 
-  @Field(() => Post)
+  @Field(() => Post, { nullable: true })
   @ManyToOne(() => Post, (post) => post.comments)
+  @JoinColumn({ name: 'post_id' })
   post: Post;
 
   @Field(() => User, { nullable: true })
   @ManyToOne(() => User, (user) => user.comments)
+  @JoinColumn({ name: 'user_id' })
   user: User;
 }

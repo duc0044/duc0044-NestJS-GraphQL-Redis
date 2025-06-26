@@ -1,11 +1,15 @@
 import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
 import { CommentService } from '../services/comment.service';
 import { Comment } from '../entities/comment.entity';
-import { CreateCommentInput, UpdateCommentInput } from '../dto/comment.dto';
+import {
+  CreateCommentInput,
+  UpdateCommentInput,
+  CacheStats,
+} from '../dto/comment.dto';
 
 @Resolver(() => Comment)
 export class CommentResolver {
-  constructor(private readonly commentService: CommentService) {}
+  constructor(private readonly commentService: CommentService) { }
 
   @Mutation(() => Comment)
   async createComment(
@@ -45,5 +49,40 @@ export class CommentResolver {
   @Mutation(() => Boolean)
   async removeComment(@Args('id', { type: () => Int }) id: number) {
     return this.commentService.remove(id);
+  }
+
+  // New queries with Redis caching
+
+  @Query(() => [Comment], { name: 'searchComments' })
+  async searchComments(@Args('searchTerm') searchTerm: string) {
+    return this.commentService.searchComments(searchTerm);
+  }
+
+  @Query(() => [Comment], { name: 'commentsByDateRange' })
+  async getCommentsByDateRange(
+    @Args('startDate') startDate: Date,
+    @Args('endDate') endDate: Date,
+  ) {
+    return this.commentService.getCommentsByDateRange(startDate, endDate);
+  }
+
+  // Cache management queries
+  @Query(() => CacheStats, { name: 'commentCacheStats' })
+  async getCacheStats() {
+    return this.commentService.getCacheStats();
+  }
+
+  @Mutation(() => Boolean, { name: 'clearCommentCache' })
+  async clearAllCommentCache() {
+    await this.commentService.clearAllCommentCache();
+    return true;
+  }
+
+  @Mutation(() => Boolean, { name: 'refreshCommentsByPostCache' })
+  async refreshCommentsByPostCache(
+    @Args('postId', { type: () => Int }) postId: number,
+  ) {
+    await this.commentService.refreshCommentsByPostCache(postId);
+    return true;
   }
 }

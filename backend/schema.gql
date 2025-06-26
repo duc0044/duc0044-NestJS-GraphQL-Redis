@@ -2,6 +2,11 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type CacheStats {
+  keys: [String!]!
+  totalKeys: Int!
+}
+
 type Category {
   created_at: DateTime!
   description: String
@@ -15,7 +20,7 @@ type Comment {
   content: String!
   created_at: DateTime!
   id: ID!
-  post: Post!
+  post: Post
   post_id: Float!
   user: User
   user_id: Float
@@ -30,7 +35,7 @@ input CreateCategoryInput {
 input CreateCommentInput {
   content: String!
   post_id: Int!
-  user_id: Int
+  user_id: Int!
 }
 
 input CreatePostInput {
@@ -71,6 +76,7 @@ type LoginResponse {
 
 type Mutation {
   clearAllCache: String!
+  clearCommentCache: Boolean!
   createCategory(createCategoryInput: CreateCategoryInput!): Category!
   createComment(createCommentInput: CreateCommentInput!): Comment!
   createPost(createPostInput: CreatePostInput!): Post!
@@ -80,6 +86,7 @@ type Mutation {
   demoteToUser(userId: Int!): User!
   login(loginInput: LoginInput!): LoginResponse!
   promoteToAdmin(userId: Int!): User!
+  refreshCommentsByPostCache(postId: Int!): Boolean!
   removeCategory(id: Int!): Boolean!
   removeComment(id: Int!): Boolean!
   removePost(id: Int!): Boolean!
@@ -116,7 +123,9 @@ type Query {
   category(id: Int!): Category!
   categoryBySlug(slug: String!): Category!
   comment(id: Int!): Comment!
+  commentCacheStats: CacheStats!
   comments: [Comment!]!
+  commentsByDateRange(endDate: DateTime!, startDate: DateTime!): [Comment!]!
   commentsByPost(postId: Int!): [Comment!]!
   commentsByUser(userId: Int!): [Comment!]!
   getCache(key: String!): String
@@ -129,8 +138,10 @@ type Query {
   postBySlug(slug: String!): Post!
   posts: [Post!]!
   postsByCategory(categoryId: Int!): [Post!]!
+  postsByTag(tagId: Int!): [Post!]!
   postsByUser(userId: Int!): [Post!]!
   redisPing: String!
+  searchComments(searchTerm: String!): [Comment!]!
   searchPosts(query: String!): [Post!]!
   tag(id: Int!): Tag!
   tagBySlug(slug: String!): Tag!
@@ -154,6 +165,8 @@ input UpdateCategoryInput {
 
 input UpdateCommentInput {
   content: String
+  post_id: Int
+  user_id: Int
 }
 
 input UpdatePostInput {

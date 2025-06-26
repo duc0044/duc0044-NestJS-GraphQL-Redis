@@ -42,7 +42,6 @@
                 </q-item>
 
                 <q-separator />
-
                 <!-- Logout button -->
                 <q-item clickable v-close-popup @click="handleLogout">
                   <q-item-section avatar>
@@ -62,6 +61,12 @@
         <q-route-tab to="/blog" label="Blog" icon="article" />
         <q-route-tab v-if="!currentUser" to="/auth/login" label="Login" icon="login" />
         <q-route-tab v-if="!currentUser" to="/auth/register" label="Register" icon="person_add" />
+        <q-route-tab
+          v-if="currentUser?.role === 'ADMIN'"
+          to="/admin"
+          label="Admin"
+          icon="dashboard"
+        />
       </q-tabs>
     </q-header>
 

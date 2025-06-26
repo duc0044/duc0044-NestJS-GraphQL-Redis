@@ -17,7 +17,7 @@ export class UserService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private readonly redisService: RedisService,
-  ) { }
+  ) {}
 
   async create(createUserInput: CreateUserInput): Promise<User> {
     const { username, email, password, role } = createUserInput;

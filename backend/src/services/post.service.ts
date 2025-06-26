@@ -18,7 +18,7 @@ export class PostService {
     @InjectRepository(Tag)
     private tagRepository: Repository<Tag>,
     private readonly redisService: RedisService,
-  ) { }
+  ) {}
 
   async create(
     createPostInput: CreatePostInput,
@@ -336,6 +336,26 @@ export class PostService {
     );
 
     return true;
+  }
+
+  async postsByTag(tagId: number): Promise<Post[]> {
+    const cacheKey = `posts:tag:${tagId}`;
+    const cached = await this.redisService.get(cacheKey);
+
+    if (cached) {
+      return JSON.parse(cached) as Post[];
+    }
+
+    const posts = await this.postRepository.find({
+      where: { tags: { id: tagId } },
+      relations: ['user', 'category', 'comments', 'tags'],
+      order: { created_at: 'DESC' },
+    });
+
+    // Cache the result for 5 minutes
+    await this.redisService.set(cacheKey, this.serializePosts(posts), 300);
+
+    return posts;
   }
 
   async searchPosts(query: string): Promise<Post[]> {

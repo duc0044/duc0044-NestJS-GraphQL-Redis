@@ -15,7 +15,7 @@ export class CategoryService {
     @InjectRepository(Category)
     private categoryRepository: Repository<Category>,
     private readonly redisService: RedisService,
-  ) { }
+  ) {}
 
   async create(createCategoryInput: CreateCategoryInput): Promise<Category> {
     const { name, slug } = createCategoryInput;

@@ -109,6 +109,12 @@ const linksList: EssentialLinkProps[] = [
     icon: 'list',
     link: '#/admin/blog/list',
   },
+  {
+    title: 'Comments',
+    caption: 'View all comments',
+    icon: 'list',
+    link: '#/admin/comments/list',
+  },
 ];
 
 const leftDrawerOpen = ref(false);

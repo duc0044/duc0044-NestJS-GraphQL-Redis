@@ -6,4 +6,4 @@ import { AuthGuard } from '../guards/auth.guard';
   providers: [AuthGuard],
   exports: [AuthGuard],
 })
-export class AuthModule { }
+export class AuthModule {}

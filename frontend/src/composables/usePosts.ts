@@ -1,4 +1,4 @@
-import { ref, watch, computed, readonly } from 'vue';
+import { ref, watch, computed, readonly, type Ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { useQuery, useMutation } from '@vue/apollo-composable';
 import gql from 'graphql-tag';
@@ -47,6 +47,10 @@ export interface CreatePostInput {
 
 interface PostsByCategoryData {
   postsByCategory: Post[];
+}
+
+interface PostsByTagData {
+  postsByTag: Post[];
 }
 
 const GET_POSTS = gql`
@@ -150,6 +154,26 @@ const GET_POSTS_BY_CATEGORY = gql`
 }
 `;
 
+const GET_POSTS_BY_TAG = gql`
+  query PostsByTag($tagId: Int!) {
+    postsByTag(tagId: $tagId) {
+       category {
+      name
+    }
+    content
+    id
+    slug
+    tags {
+      name
+    }
+    thumbnail
+    title
+    user {
+      username
+    }
+  }
+}
+`;
 
 export function usePosts() {
   const $q = useQuasar();
@@ -259,13 +283,29 @@ export function usePostById(postId: number) {
     error: readonly(error),
   };
 }
-export function usePostsByCategory(categoryId: number) {
-  const { result, loading, error } = useQuery<PostsByCategoryData>(GET_POSTS_BY_CATEGORY, {
-    categoryId: Number(categoryId),
-  });
+
+export function usePostsByCategory(categoryId: Ref<number>) {
+  const { result, loading, error } = useQuery<PostsByCategoryData>(GET_POSTS_BY_CATEGORY,
+    computed(() => ({ categoryId: categoryId.value })),
+    () => ({ enabled: categoryId.value > 0 })
+  );
+
   return {
-    posts: result.value?.postsByCategory,
+    posts: computed(() => result.value?.postsByCategory || []),
     loading: readonly(loading),
     error: readonly(error),
   };
 };
+
+export function usePostsByTag(tagId: Ref<number>) {
+  const { result, loading, error } = useQuery<PostsByTagData>(GET_POSTS_BY_TAG,
+    computed(() => ({ tagId: tagId.value })),
+    () => ({ enabled: tagId.value > 0 })
+  );
+
+  return {
+    posts: computed(() => result.value?.postsByTag || []),
+    loading: readonly(loading),
+    error: readonly(error),
+  };
+}

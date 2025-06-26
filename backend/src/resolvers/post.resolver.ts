@@ -92,4 +92,9 @@ export class PostResolver {
     }
     return this.postService.remove(id);
   }
+
+  @Query(() => [Post], { name: 'postsByTag' })
+  async postsByTag(@Args('tagId', { type: () => Int }) tagId: number) {
+    return this.postService.postsByTag(tagId);
+  }
 }

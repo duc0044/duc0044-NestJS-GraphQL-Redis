@@ -13,6 +13,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'blog/list', component: () => import('pages/admin/blog/ListPage.vue') },
       { path: 'blog/add', component: () => import('pages/admin/blog/AddPage.vue') },
       { path: 'blog/update/:id', component: () => import('pages/admin/blog/updatePage.vue') },
+      { path: 'comments/list', component: () => import('pages/admin/comments/ListPage.vue') },
     ],
   },
   {
