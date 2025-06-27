@@ -77,46 +77,45 @@ const GET_POSTS = gql`
 `;
 
 const UPDATE_POST = gql`
- mutation UpdatePost($id: Int!, $updatePostInput: UpdatePostInput!) {
-  updatePost(id: $id, updatePostInput: $updatePostInput) {
-    id
-    title
-    slug
-    content
-    category {
+  mutation UpdatePost($id: Int!, $updatePostInput: UpdatePostInput!) {
+    updatePost(id: $id, updatePostInput: $updatePostInput) {
       id
-      name
-    }
-    tags {
-      id
-      name
+      title
+      slug
+      content
+      category {
+        id
+        name
+      }
+      tags {
+        id
+        name
+      }
     }
   }
-}
-
 `;
 
 const DELETE_POST = gql`
-mutation RemovePost($removePostId: Int!) {
-  removePost(id: $removePostId)
-}
+  mutation RemovePost($removePostId: Int!) {
+    removePost(id: $removePostId)
+  }
 `;
 
 const CREATE_POST = gql`
   mutation CreatePost($createPostInput: CreatePostInput!) {
     createPost(createPostInput: $createPostInput) {
-    id
-    title
-    slug
-    content
-    thumbnail
+      id
+      title
+      slug
+      content
+      thumbnail
     }
   }
 `;
 
 const GET_POSTS_BY_ID = gql`
- query Post($postId: Int!) {
-  post(id: $postId) {
+  query Post($postId: Int!) {
+    post(id: $postId) {
       category {
         id
         name
@@ -124,55 +123,55 @@ const GET_POSTS_BY_ID = gql`
       slug
       content
       title
-    tags {
-      id
-      name
+      tags {
+        id
+        name
+      }
+      thumbnail
     }
-    thumbnail
   }
-}
 `;
 
 const GET_POSTS_BY_CATEGORY = gql`
   query PostsByCategory($categoryId: Int!) {
-  postsByCategory(categoryId: $categoryId) {
-    category {
-      name
-    }
-    content
-    id
-    slug
-    tags {
-      name
-    }
-    thumbnail
-    title
-    user {
-      username
+    postsByCategory(categoryId: $categoryId) {
+      category {
+        name
+      }
+      content
+      id
+      slug
+      tags {
+        name
+      }
+      thumbnail
+      title
+      user {
+        username
+      }
     }
   }
-}
 `;
 
 const GET_POSTS_BY_TAG = gql`
   query PostsByTag($tagId: Int!) {
     postsByTag(tagId: $tagId) {
-       category {
-      name
-    }
-    content
-    id
-    slug
-    tags {
-      name
-    }
-    thumbnail
-    title
-    user {
-      username
+      category {
+        name
+      }
+      content
+      id
+      slug
+      tags {
+        name
+      }
+      thumbnail
+      title
+      user {
+        username
+      }
     }
   }
-}
 `;
 
 export function usePosts() {
@@ -186,18 +185,20 @@ export function usePosts() {
 
   const { result, loading, error, refetch } = useQuery<PostsData>(GET_POSTS);
 
-  watch(result, (newResult) => {
-    if (newResult?.posts) {
-      posts.value = newResult.posts;
-      pagination.value.rowsNumber = newResult.posts.length;
-    }
-  }, { immediate: true });
+  watch(
+    result,
+    (newResult) => {
+      if (newResult?.posts) {
+        posts.value = newResult.posts;
+        pagination.value.rowsNumber = newResult.posts.length;
+      }
+    },
+    { immediate: true },
+  );
 
   const { mutate: createPostMutation } = useMutation(CREATE_POST);
   const { mutate: updatePostMutation } = useMutation(UPDATE_POST);
   const { mutate: deletePostMutation } = useMutation(DELETE_POST);
-
-
 
   const createPost = async (post: CreatePostInput) => {
     await createPostMutation({ createPostInput: post });
@@ -214,7 +215,7 @@ export function usePosts() {
         content: post.content,
         thumbnail: post.thumbnail,
         category_id: Number(post.category.id),
-        tag_ids: post.tags.map(tag => Number(tag.id)),
+        tag_ids: post.tags.map((tag) => Number(tag.id)),
       },
     });
     await refetch();
@@ -285,9 +286,10 @@ export function usePostById(postId: number) {
 }
 
 export function usePostsByCategory(categoryId: Ref<number>) {
-  const { result, loading, error } = useQuery<PostsByCategoryData>(GET_POSTS_BY_CATEGORY,
+  const { result, loading, error } = useQuery<PostsByCategoryData>(
+    GET_POSTS_BY_CATEGORY,
     computed(() => ({ categoryId: categoryId.value })),
-    () => ({ enabled: categoryId.value > 0 })
+    () => ({ enabled: categoryId.value > 0 }),
   );
 
   return {
@@ -295,12 +297,13 @@ export function usePostsByCategory(categoryId: Ref<number>) {
     loading: readonly(loading),
     error: readonly(error),
   };
-};
+}
 
 export function usePostsByTag(tagId: Ref<number>) {
-  const { result, loading, error } = useQuery<PostsByTagData>(GET_POSTS_BY_TAG,
+  const { result, loading, error } = useQuery<PostsByTagData>(
+    GET_POSTS_BY_TAG,
     computed(() => ({ tagId: tagId.value })),
-    () => ({ enabled: tagId.value > 0 })
+    () => ({ enabled: tagId.value > 0 }),
   );
 
   return {

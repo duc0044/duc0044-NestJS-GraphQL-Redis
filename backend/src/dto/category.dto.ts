@@ -1,5 +1,13 @@
-import { InputType, Field } from '@nestjs/graphql';
-import { IsString, MinLength, MaxLength, IsOptional, IsNotEmpty } from 'class-validator';
+import { InputType, Field, ObjectType } from '@nestjs/graphql';
+import {
+  IsString,
+  MinLength,
+  MaxLength,
+  IsOptional,
+  IsNotEmpty,
+} from 'class-validator';
+import { PaginationMeta } from './pagination.dto';
+import { Category } from '../entities/category.entity';
 
 @InputType()
 export class CreateCategoryInput {
@@ -43,4 +51,13 @@ export class UpdateCategoryInput {
   @IsOptional()
   @IsString()
   description?: string;
+}
+
+@ObjectType()
+export class PaginatedCategoriesResponse {
+  @Field(() => [Category])
+  data: Category[];
+
+  @Field(() => PaginationMeta)
+  meta: PaginationMeta;
 }

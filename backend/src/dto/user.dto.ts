@@ -1,4 +1,4 @@
-import { InputType, Field } from '@nestjs/graphql';
+import { InputType, Field, ObjectType } from '@nestjs/graphql';
 import {
   IsEmail,
   IsString,
@@ -9,6 +9,8 @@ import {
   IsNotEmpty,
 } from 'class-validator';
 import { UserRole } from '../entities/user.entity';
+import { PaginationMeta } from './pagination.dto';
+import { User } from '../entities/user.entity';
 
 @InputType()
 export class CreateUserInput {
@@ -74,4 +76,13 @@ export class LoginInput {
   @MinLength(6, { message: 'Password must be at least 6 characters' })
   @IsNotEmpty({ message: 'Password is required' })
   password: string;
+}
+
+@ObjectType()
+export class PaginatedUsersResponse {
+  @Field(() => [User])
+  data: User[];
+
+  @Field(() => PaginationMeta)
+  meta: PaginationMeta;
 }

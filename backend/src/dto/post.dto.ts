@@ -1,4 +1,4 @@
-import { InputType, Field, Int } from '@nestjs/graphql';
+import { InputType, Field, Int, ObjectType } from '@nestjs/graphql';
 import {
   IsString,
   MinLength,
@@ -8,6 +8,8 @@ import {
   IsArray,
   IsNotEmpty,
 } from 'class-validator';
+import { PaginationMeta } from './pagination.dto';
+import { Post } from '../entities/post.entity';
 
 @InputType()
 export class CreatePostInput {
@@ -83,4 +85,13 @@ export class UpdatePostInput {
   @IsOptional()
   @IsArray()
   tag_ids?: number[];
+}
+
+@ObjectType()
+export class PaginatedPostsResponse {
+  @Field(() => [Post])
+  data: Post[];
+
+  @Field(() => PaginationMeta)
+  meta: PaginationMeta;
 }

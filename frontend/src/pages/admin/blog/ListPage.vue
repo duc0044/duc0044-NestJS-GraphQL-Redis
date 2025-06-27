@@ -1,4 +1,3 @@
-<!-- src/pages/admin/blog/IndexPage.vue -->
 <template>
   <q-page class="q-pa-md">
     <div class="row q-mb-md">

@@ -17,8 +17,8 @@
                 label="Email"
                 outlined
                 :rules="[
-                  val => !!val || 'Email là bắt buộc',
-                  val => validateEmail(val) || 'Email không hợp lệ'
+                  (val) => !!val || 'Email là bắt buộc',
+                  (val) => validateEmail(val) || 'Email không hợp lệ',
                 ]"
                 :error="!!errors.email"
                 :error-message="errors.email"
@@ -36,8 +36,8 @@
                 label="Mật khẩu"
                 outlined
                 :rules="[
-                  val => !!val || 'Mật khẩu là bắt buộc',
-                  val => val.length >= 6 || 'Mật khẩu phải có ít nhất 6 ký tự'
+                  (val) => !!val || 'Mật khẩu là bắt buộc',
+                  (val) => val.length >= 6 || 'Mật khẩu phải có ít nhất 6 ký tự',
                 ]"
                 :error="!!errors.password"
                 :error-message="errors.password"
@@ -56,11 +56,7 @@
               </q-input>
 
               <!-- Remember Me Checkbox -->
-              <q-checkbox
-                v-model="form.rememberMe"
-                label="Ghi nhớ đăng nhập"
-                color="primary"
-              />
+              <q-checkbox v-model="form.rememberMe" label="Ghi nhớ đăng nhập" color="primary" />
 
               <!-- Submit Button -->
               <div class="q-mt-lg">
@@ -101,24 +97,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
-import { useQuasar } from 'quasar'
-import { useMutation } from '@vue/apollo-composable'
-import gql from 'graphql-tag'
-import { useAuthStore } from 'src/stores/auth'
+import { ref, reactive } from 'vue';
+import { useRouter } from 'vue-router';
+import { useQuasar } from 'quasar';
+import { useMutation } from '@vue/apollo-composable';
+import gql from 'graphql-tag';
+import { useAuthStore } from 'src/stores/auth';
 
 // Types for error handling
 interface GraphQLError {
-  message: string
+  message: string;
   extensions?: {
-    code?: string
-  }
+    code?: string;
+  };
 }
 
 interface ApolloError {
-  graphQLErrors?: GraphQLError[]
-  networkError?: Error
+  graphQLErrors?: GraphQLError[];
+  networkError?: Error;
 }
 
 // GraphQL mutation for login
@@ -134,106 +130,106 @@ const LOGIN_MUTATION = gql`
       token
     }
   }
-`
+`;
 
 // Router and Quasar
-const router = useRouter()
-const $q = useQuasar()
-const authStore = useAuthStore()
+const router = useRouter();
+const $q = useQuasar();
+const authStore = useAuthStore();
 
 // Form data
 const form = reactive({
   email: '',
   password: '',
-  rememberMe: false
-})
+  rememberMe: false,
+});
 
 // UI state
-const loading = ref(false)
-const showPassword = ref(false)
+const loading = ref(false);
+const showPassword = ref(false);
 const errors = reactive({
   email: '',
-  password: ''
-})
-const generalError = ref('')
+  password: '',
+});
+const generalError = ref('');
 
 // GraphQL mutation
-const { mutate: loginMutation } = useMutation(LOGIN_MUTATION)
+const { mutate: loginMutation } = useMutation(LOGIN_MUTATION);
 
 // Validation functions
 const validateEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailRegex.test(email)
-}
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
 
 const clearError = (field: 'email' | 'password') => {
-  errors[field] = ''
-  generalError.value = ''
-}
+  errors[field] = '';
+  generalError.value = '';
+};
 
 const clearAllErrors = () => {
-  errors.email = ''
-  errors.password = ''
-  generalError.value = ''
-}
+  errors.email = '';
+  errors.password = '';
+  generalError.value = '';
+};
 
 // Handle form submission
 const onSubmit = async () => {
-  clearAllErrors()
-  loading.value = true
+  clearAllErrors();
+  loading.value = true;
 
   try {
     const result = await loginMutation({
       loginInput: {
         email: form.email,
-        password: form.password
-      }
-    })
+        password: form.password,
+      },
+    });
 
     if (result?.data?.login) {
-      const { user, token } = result.data.login
+      const { user, token } = result.data.login;
 
       // Use auth store to manage authentication
-      authStore.login(user, token, form.rememberMe)
+      authStore.login(user, token, form.rememberMe);
 
       // Show success message
       $q.notify({
         type: 'positive',
         message: `Chào mừng trở lại, ${user.username}!`,
-        position: 'top'
-      })
+        position: 'top',
+      });
 
       // Redirect based on user role
       if (user.role === 'ADMIN') {
-        await router.push('/admin/users/list')
+        await router.push('/admin/users/list');
       } else {
-        await router.push('/')
+        await router.push('/');
       }
     }
   } catch (error: unknown) {
-    console.error('Login error:', error)
-    
+    console.error('Login error:', error);
+
     // Handle specific GraphQL errors
     if (error && typeof error === 'object' && 'graphQLErrors' in error) {
-      const apolloError = error as ApolloError
-      const graphQLError = apolloError.graphQLErrors?.[0]
-      
+      const apolloError = error as ApolloError;
+      const graphQLError = apolloError.graphQLErrors?.[0];
+
       if (graphQLError?.extensions?.code === 'UNAUTHORIZED') {
-        generalError.value = 'Email hoặc mật khẩu không đúng'
+        generalError.value = 'Email hoặc mật khẩu không đúng';
       } else if (graphQLError?.message) {
-        generalError.value = graphQLError.message
+        generalError.value = graphQLError.message;
       } else {
-        generalError.value = 'Đăng nhập thất bại. Vui lòng thử lại.'
+        generalError.value = 'Đăng nhập thất bại. Vui lòng thử lại.';
       }
     } else if (error && typeof error === 'object' && 'networkError' in error) {
-      generalError.value = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.'
+      generalError.value = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.';
     } else {
-      generalError.value = 'Đã xảy ra lỗi. Vui lòng thử lại sau.'
+      generalError.value = 'Đã xảy ra lỗi. Vui lòng thử lại sau.';
     }
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 </script>
 
 <style scoped>

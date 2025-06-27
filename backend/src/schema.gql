@@ -102,6 +102,25 @@ type Mutation {
   updateUser(id: Int!, updateUserInput: UpdateUserInput!): User!
 }
 
+type PaginatedPostsResponse {
+  data: [Post!]!
+  meta: PaginationMeta!
+}
+
+input PaginationInput {
+  limit: Int! = 10
+  page: Int! = 1
+}
+
+type PaginationMeta {
+  currentPage: Int!
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  itemsPerPage: Int!
+  totalItems: Int!
+  totalPages: Int!
+}
+
 type Post {
   category: Category
   category_id: Float
@@ -134,15 +153,21 @@ type Query {
   isAdmin(userId: Int!): Boolean!
   me: User!
   myPosts: [Post!]!
+  myPostsPaginated(paginationInput: PaginationInput!): PaginatedPostsResponse!
   post(id: Int!): Post!
   postBySlug(slug: String!): Post!
   posts: [Post!]!
   postsByCategory(categoryId: Int!): [Post!]!
+  postsByCategoryPaginated(categoryId: Int!, paginationInput: PaginationInput!): PaginatedPostsResponse!
   postsByTag(tagId: Int!): [Post!]!
+  postsByTagPaginated(paginationInput: PaginationInput!, tagId: Int!): PaginatedPostsResponse!
   postsByUser(userId: Int!): [Post!]!
+  postsByUserPaginated(paginationInput: PaginationInput!, userId: Int!): PaginatedPostsResponse!
+  postsPaginated(paginationInput: PaginationInput!): PaginatedPostsResponse!
   redisPing: String!
   searchComments(searchTerm: String!): [Comment!]!
   searchPosts(query: String!): [Post!]!
+  searchPostsPaginated(paginationInput: PaginationInput!, query: String!): PaginatedPostsResponse!
   tag(id: Int!): Tag!
   tagBySlug(slug: String!): Tag!
   tags: [Tag!]!

@@ -2,7 +2,12 @@ import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { PostService } from '../services/post.service';
 import { Post } from '../entities/post.entity';
-import { CreatePostInput, UpdatePostInput } from '../dto/post.dto';
+import {
+  CreatePostInput,
+  UpdatePostInput,
+  PaginatedPostsResponse,
+} from '../dto/post.dto';
+import { PaginationInput } from '../dto/pagination.dto';
 import { RolesGuard } from '../guards/roles.guard';
 import { AuthGuard } from '../guards/auth.guard';
 import { Roles } from '../decorators/roles.decorator';
@@ -96,5 +101,57 @@ export class PostResolver {
   @Query(() => [Post], { name: 'postsByTag' })
   async postsByTag(@Args('tagId', { type: () => Int }) tagId: number) {
     return this.postService.postsByTag(tagId);
+  }
+
+  @Query(() => PaginatedPostsResponse, { name: 'postsPaginated' })
+  async findAllPaginated(
+    @Args('paginationInput') paginationInput: PaginationInput,
+  ) {
+    return this.postService.findAllPaginated(paginationInput);
+  }
+
+  @Query(() => PaginatedPostsResponse, { name: 'postsByCategoryPaginated' })
+  async findByCategoryPaginated(
+    @Args('categoryId', { type: () => Int }) categoryId: number,
+    @Args('paginationInput') paginationInput: PaginationInput,
+  ) {
+    return this.postService.findByCategoryPaginated(
+      categoryId,
+      paginationInput,
+    );
+  }
+
+  @Query(() => PaginatedPostsResponse, { name: 'postsByUserPaginated' })
+  async findByUserPaginated(
+    @Args('userId', { type: () => Int }) userId: number,
+    @Args('paginationInput') paginationInput: PaginationInput,
+  ) {
+    return this.postService.findByUserPaginated(userId, paginationInput);
+  }
+
+  @Query(() => PaginatedPostsResponse, { name: 'myPostsPaginated' })
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(UserRole.USER, UserRole.ADMIN)
+  async findMyPostsPaginated(
+    @CurrentUser() user: User,
+    @Args('paginationInput') paginationInput: PaginationInput,
+  ) {
+    return this.postService.findByUserPaginated(user.id, paginationInput);
+  }
+
+  @Query(() => PaginatedPostsResponse, { name: 'searchPostsPaginated' })
+  async searchPostsPaginated(
+    @Args('query') query: string,
+    @Args('paginationInput') paginationInput: PaginationInput,
+  ) {
+    return this.postService.searchPostsPaginated(query, paginationInput);
+  }
+
+  @Query(() => PaginatedPostsResponse, { name: 'postsByTagPaginated' })
+  async postsByTagPaginated(
+    @Args('tagId', { type: () => Int }) tagId: number,
+    @Args('paginationInput') paginationInput: PaginationInput,
+  ) {
+    return this.postService.postsByTagPaginated(tagId, paginationInput);
   }
 }

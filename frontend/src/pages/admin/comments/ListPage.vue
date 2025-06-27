@@ -1,6 +1,5 @@
 <template>
-  <q-page>
-    <h1>Comments</h1>
+  <q-page class="q-pa-md">
     <q-table
       title="Danh sách bình luận"
       :rows="comments"

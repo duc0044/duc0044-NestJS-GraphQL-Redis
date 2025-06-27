@@ -1,5 +1,13 @@
-import { InputType, Field } from '@nestjs/graphql';
-import { IsString, MinLength, MaxLength, IsOptional, IsNotEmpty } from 'class-validator';
+import { InputType, Field, ObjectType } from '@nestjs/graphql';
+import {
+  IsString,
+  MinLength,
+  MaxLength,
+  IsOptional,
+  IsNotEmpty,
+} from 'class-validator';
+import { PaginationMeta } from './pagination.dto';
+import { Tag } from '../entities/tag.entity';
 
 @InputType()
 export class CreateTagInput {
@@ -33,4 +41,13 @@ export class UpdateTagInput {
   @MinLength(2, { message: 'Slug must be at least 2 characters' })
   @MaxLength(50, { message: 'Slug must be less than 50 characters' })
   slug?: string;
+}
+
+@ObjectType()
+export class PaginatedTagsResponse {
+  @Field(() => [Tag])
+  data: Tag[];
+
+  @Field(() => PaginationMeta)
+  meta: PaginationMeta;
 }

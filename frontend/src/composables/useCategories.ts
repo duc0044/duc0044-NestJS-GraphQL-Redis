@@ -1,18 +1,18 @@
-import { ref, watch } from 'vue'
-import { useQuasar } from 'quasar'
-import { useQuery, useMutation } from '@vue/apollo-composable'
-import gql from 'graphql-tag'
+import { ref, watch } from 'vue';
+import { useQuasar } from 'quasar';
+import { useQuery, useMutation } from '@vue/apollo-composable';
+import gql from 'graphql-tag';
 
 // TypeScript interfaces
 interface Category {
-  id: string
-  name: string
-  slug: string
-  description: string
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
 }
 
 interface CategoriesData {
-  categories: Category[]
+  categories: Category[];
 }
 
 // GraphQL queries and mutations
@@ -25,7 +25,7 @@ const GET_CATEGORIES = gql`
       slug
     }
   }
-`
+`;
 
 const CREATE_CATEGORY = gql`
   mutation CreateCategory($createCategoryInput: CreateCategoryInput!) {
@@ -36,7 +36,7 @@ const CREATE_CATEGORY = gql`
       description
     }
   }
-`
+`;
 
 const UPDATE_CATEGORY = gql`
   mutation UpdateCategory($updateCategoryId: Int!, $updateCategoryInput: UpdateCategoryInput!) {
@@ -47,19 +47,19 @@ const UPDATE_CATEGORY = gql`
       description
     }
   }
-`
+`;
 
 const DELETE_CATEGORY = gql`
   mutation RemoveCategory($removeCategoryId: Int!) {
     removeCategory(id: $removeCategoryId)
   }
-`
+`;
 export function useCategories() {
-  const $q = useQuasar()
+  const $q = useQuasar();
 
   // Reactive data
-  const loading = ref(false)
-  const categories = ref<Category[]>([])
+  const loading = ref(false);
+  const categories = ref<Category[]>([]);
 
   // Pagination
   const pagination = ref({
@@ -68,7 +68,7 @@ export function useCategories() {
     page: 1,
     rowsPerPage: 10,
     rowsNumber: 0,
-  })
+  });
 
   // GraphQL operations
   const {
@@ -81,23 +81,23 @@ export function useCategories() {
     {
       fetchPolicy: 'network-only',
     },
-  )
+  );
 
-  const { mutate: createCategoryMutation } = useMutation(CREATE_CATEGORY)
-  const { mutate: updateCategoryMutation } = useMutation(UPDATE_CATEGORY)
-  const { mutate: deleteCategoryMutation } = useMutation(DELETE_CATEGORY)
+  const { mutate: createCategoryMutation } = useMutation(CREATE_CATEGORY);
+  const { mutate: updateCategoryMutation } = useMutation(UPDATE_CATEGORY);
+  const { mutate: deleteCategoryMutation } = useMutation(DELETE_CATEGORY);
 
   // Watch for query results
   watch(categoriesResult, (newResult) => {
     if (newResult?.categories) {
-      categories.value = newResult.categories
-      pagination.value.rowsNumber = newResult.categories.length
+      categories.value = newResult.categories;
+      pagination.value.rowsNumber = newResult.categories.length;
     }
-  })
+  });
 
   watch(categoriesLoading, (newLoading) => {
-    loading.value = newLoading
-  })
+    loading.value = newLoading;
+  });
 
   // Function to convert name to slug
   const generateSlug = (name: string): string => {
@@ -109,8 +109,8 @@ export function useCategories() {
       .replace(/\s+/g, '-') // Replace spaces with hyphens
       .replace(/-+/g, '-') // Replace multiple hyphens with single
       .trim()
-      .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
-  }
+      .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+  };
 
   // Actions
   const deleteCategory = (category: Category) => {
@@ -124,41 +124,41 @@ export function useCategories() {
         try {
           await deleteCategoryMutation({
             removeCategoryId: Number(category.id),
-          })
-          await refetchCategories()
+          });
+          await refetchCategories();
           $q.notify({
             type: 'positive',
             message: `Đã xóa danh mục ${category.name}`,
             position: 'top',
-          })
+          });
         } catch (err) {
-          console.error('Error deleting category:', err)
+          console.error('Error deleting category:', err);
           $q.notify({
             type: 'negative',
             message: 'Có lỗi xảy ra khi xóa danh mục',
             position: 'top',
-          })
+          });
         }
-      })()
-    })
-  }
+      })();
+    });
+  };
 
   const onRequest = (props: {
     pagination: {
-      sortBy: string
-      descending: boolean
-      page: number
-      rowsPerPage: number
-      rowsNumber?: number
-    }
-    filter?: unknown
-    getCellValue: (col: unknown, row: unknown) => unknown
+      sortBy: string;
+      descending: boolean;
+      page: number;
+      rowsPerPage: number;
+      rowsNumber?: number;
+    };
+    filter?: unknown;
+    getCellValue: (col: unknown, row: unknown) => unknown;
   }) => {
     pagination.value = {
       ...props.pagination,
       rowsNumber: props.pagination.rowsNumber || 0,
-    }
-  }
+    };
+  };
 
   return {
     // Data
@@ -175,5 +175,5 @@ export function useCategories() {
     // Mutations
     createCategoryMutation,
     updateCategoryMutation,
-  }
+  };
 }

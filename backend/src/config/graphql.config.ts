@@ -15,12 +15,14 @@ export const graphqlConfig = registerAs(
     plugins: [ApolloServerPluginLandingPageLocalDefault()],
     sortSchema: true,
     subscriptions: { 'graphql-ws': true },
-    context: ({ req, res }) => ({ req, res }),
+    context: ({ req, res }: { req: Request; res: Response }) => ({ req, res }),
     formatError: (error: GraphQLError): GraphQLFormattedError => {
-      const invalidArgs = (error.extensions as any)?.invalidArgs;
+      const invalidArgs = (
+        error.extensions as { invalidArgs?: ValidationError[] }
+      )?.invalidArgs;
 
       if (error.message === 'Validation failed' && Array.isArray(invalidArgs)) {
-        const fields = (invalidArgs as ValidationError[]).map((err) => ({
+        const fields = invalidArgs.map((err) => ({
           field: err.property,
           messages: Object.values(err.constraints || {}),
         }));

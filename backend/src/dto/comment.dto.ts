@@ -1,5 +1,13 @@
 import { InputType, Field, Int, ObjectType } from '@nestjs/graphql';
-import { IsNotEmpty, IsString, IsOptional, IsNumber, MinLength } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsOptional,
+  IsNumber,
+  MinLength,
+} from 'class-validator';
+import { PaginationMeta } from './pagination.dto';
+import { Comment } from '../entities/comment.entity';
 
 @InputType()
 export class CreateCommentInput {
@@ -57,4 +65,13 @@ export class CacheStats {
 
   @Field(() => [String])
   keys: string[];
+}
+
+@ObjectType()
+export class PaginatedCommentsResponse {
+  @Field(() => [Comment])
+  data: Comment[];
+
+  @Field(() => PaginationMeta)
+  meta: PaginationMeta;
 }

@@ -7,7 +7,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Post } from '../entities/post.entity';
 import { Tag } from '../entities/tag.entity';
-import { CreatePostInput, UpdatePostInput } from '../dto/post.dto';
+import {
+  CreatePostInput,
+  UpdatePostInput,
+  PaginatedPostsResponse,
+} from '../dto/post.dto';
+import { PaginationInput } from '../dto/pagination.dto';
 import { RedisService } from '../redis/redis.service';
 
 @Injectable()
@@ -381,6 +386,261 @@ export class PostService {
     await this.redisService.set(cacheKey, this.serializePosts(posts), 120);
 
     return posts;
+  }
+
+  async findAllPaginated(
+    paginationInput: PaginationInput,
+  ): Promise<PaginatedPostsResponse> {
+    const { page = 1, limit = 10 } = paginationInput;
+    const skip = (page - 1) * limit;
+
+    // Try to get from cache first
+    const cacheKey = `posts:paginated:${page}:${limit}`;
+    const cached = await this.redisService.get(cacheKey);
+
+    if (cached) {
+      return JSON.parse(cached) as PaginatedPostsResponse;
+    }
+
+    // Get total count
+    const totalItems = await this.postRepository.count();
+
+    // Get paginated posts
+    const posts = await this.postRepository.find({
+      relations: ['user', 'category', 'comments', 'tags'],
+      order: { created_at: 'DESC' },
+      skip,
+      take: limit,
+    });
+
+    // Calculate pagination meta
+    const totalPages = Math.ceil(totalItems / limit);
+    const meta = {
+      currentPage: page,
+      totalPages,
+      totalItems,
+      itemsPerPage: limit,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+    };
+
+    const result: PaginatedPostsResponse = {
+      data: posts,
+      meta,
+    };
+
+    // Cache the result for 5 minutes
+    await this.redisService.set(cacheKey, JSON.stringify(result), 300);
+
+    return result;
+  }
+
+  async findByCategoryPaginated(
+    categoryId: number,
+    paginationInput: PaginationInput,
+  ): Promise<PaginatedPostsResponse> {
+    const { page = 1, limit = 10 } = paginationInput;
+    const skip = (page - 1) * limit;
+
+    const cacheKey = `posts:category:${categoryId}:paginated:${page}:${limit}`;
+    const cached = await this.redisService.get(cacheKey);
+
+    if (cached) {
+      return JSON.parse(cached) as PaginatedPostsResponse;
+    }
+
+    // Get total count for category
+    const totalItems = await this.postRepository.count({
+      where: { category_id: categoryId },
+    });
+
+    // Get paginated posts for category
+    const posts = await this.postRepository.find({
+      where: { category_id: categoryId },
+      relations: ['user', 'category', 'comments', 'tags'],
+      order: { created_at: 'DESC' },
+      skip,
+      take: limit,
+    });
+
+    // Calculate pagination meta
+    const totalPages = Math.ceil(totalItems / limit);
+    const meta = {
+      currentPage: page,
+      totalPages,
+      totalItems,
+      itemsPerPage: limit,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+    };
+
+    const result: PaginatedPostsResponse = {
+      data: posts,
+      meta,
+    };
+
+    // Cache the result for 5 minutes
+    await this.redisService.set(cacheKey, JSON.stringify(result), 300);
+
+    return result;
+  }
+
+  async findByUserPaginated(
+    userId: number,
+    paginationInput: PaginationInput,
+  ): Promise<PaginatedPostsResponse> {
+    const { page = 1, limit = 10 } = paginationInput;
+    const skip = (page - 1) * limit;
+
+    const cacheKey = `posts:user:${userId}:paginated:${page}:${limit}`;
+    const cached = await this.redisService.get(cacheKey);
+
+    if (cached) {
+      return JSON.parse(cached) as PaginatedPostsResponse;
+    }
+
+    // Get total count for user
+    const totalItems = await this.postRepository.count({
+      where: { user_id: userId },
+    });
+
+    // Get paginated posts for user
+    const posts = await this.postRepository.find({
+      where: { user_id: userId },
+      relations: ['user', 'category', 'comments', 'tags'],
+      order: { created_at: 'DESC' },
+      skip,
+      take: limit,
+    });
+
+    // Calculate pagination meta
+    const totalPages = Math.ceil(totalItems / limit);
+    const meta = {
+      currentPage: page,
+      totalPages,
+      totalItems,
+      itemsPerPage: limit,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+    };
+
+    const result: PaginatedPostsResponse = {
+      data: posts,
+      meta,
+    };
+
+    // Cache the result for 5 minutes
+    await this.redisService.set(cacheKey, JSON.stringify(result), 300);
+
+    return result;
+  }
+
+  async postsByTagPaginated(
+    tagId: number,
+    paginationInput: PaginationInput,
+  ): Promise<PaginatedPostsResponse> {
+    const { page = 1, limit = 10 } = paginationInput;
+    const skip = (page - 1) * limit;
+
+    const cacheKey = `posts:tag:${tagId}:paginated:${page}:${limit}`;
+    const cached = await this.redisService.get(cacheKey);
+
+    if (cached) {
+      return JSON.parse(cached) as PaginatedPostsResponse;
+    }
+
+    // Get total count for tag
+    const totalItems = await this.postRepository.count({
+      where: { tags: { id: tagId } },
+    });
+
+    // Get paginated posts for tag
+    const posts = await this.postRepository.find({
+      where: { tags: { id: tagId } },
+      relations: ['user', 'category', 'comments', 'tags'],
+      order: { created_at: 'DESC' },
+      skip,
+      take: limit,
+    });
+
+    // Calculate pagination meta
+    const totalPages = Math.ceil(totalItems / limit);
+    const meta = {
+      currentPage: page,
+      totalPages,
+      totalItems,
+      itemsPerPage: limit,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+    };
+
+    const result: PaginatedPostsResponse = {
+      data: posts,
+      meta,
+    };
+
+    // Cache the result for 5 minutes
+    await this.redisService.set(cacheKey, JSON.stringify(result), 300);
+
+    return result;
+  }
+
+  async searchPostsPaginated(
+    query: string,
+    paginationInput: PaginationInput,
+  ): Promise<PaginatedPostsResponse> {
+    const { page = 1, limit = 10 } = paginationInput;
+    const skip = (page - 1) * limit;
+
+    const cacheKey = `posts:search:${query}:paginated:${page}:${limit}`;
+    const cached = await this.redisService.get(cacheKey);
+
+    if (cached) {
+      return JSON.parse(cached) as PaginatedPostsResponse;
+    }
+
+    // Get total count for search
+    const totalItems = await this.postRepository
+      .createQueryBuilder('post')
+      .where('post.title LIKE :query OR post.content LIKE :query', {
+        query: `%${query}%`,
+      })
+      .getCount();
+
+    // Get paginated search results
+    const posts = await this.postRepository
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.user', 'user')
+      .leftJoinAndSelect('post.category', 'category')
+      .leftJoinAndSelect('post.tags', 'tags')
+      .where('post.title LIKE :query OR post.content LIKE :query', {
+        query: `%${query}%`,
+      })
+      .orderBy('post.created_at', 'DESC')
+      .skip(skip)
+      .take(limit)
+      .getMany();
+
+    // Calculate pagination meta
+    const totalPages = Math.ceil(totalItems / limit);
+    const meta = {
+      currentPage: page,
+      totalPages,
+      totalItems,
+      itemsPerPage: limit,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+    };
+
+    const result: PaginatedPostsResponse = {
+      data: posts,
+      meta,
+    };
+
+    // Cache the result for 2 minutes (shorter TTL for search)
+    await this.redisService.set(cacheKey, JSON.stringify(result), 120);
+
+    return result;
   }
 
   private async clearCache(): Promise<void> {

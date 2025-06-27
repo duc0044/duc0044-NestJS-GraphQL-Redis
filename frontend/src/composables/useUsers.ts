@@ -1,18 +1,18 @@
-import { ref, watch } from 'vue'
-import { useQuasar } from 'quasar'
-import { useQuery, useMutation } from '@vue/apollo-composable'
-import gql from 'graphql-tag'
+import { ref, watch } from 'vue';
+import { useQuasar } from 'quasar';
+import { useQuery, useMutation } from '@vue/apollo-composable';
+import gql from 'graphql-tag';
 
 // TypeScript interfaces
 export interface User {
-  id: string
-  username: string
-  email: string
-  role: string
+  id: string;
+  username: string;
+  email: string;
+  role: string;
 }
 
 interface UsersData {
-  users: User[]
+  users: User[];
 }
 
 // GraphQL queries and mutations
@@ -25,7 +25,7 @@ const GET_USERS = gql`
       role
     }
   }
-`
+`;
 
 const CREATE_USER = gql`
   mutation CreateUser($createUserInput: CreateUserInput!) {
@@ -36,7 +36,7 @@ const CREATE_USER = gql`
       role
     }
   }
-`
+`;
 
 const UPDATE_USER = gql`
   mutation UpdateUser($updateUserId: Int!, $updateUserInput: UpdateUserInput!) {
@@ -47,20 +47,20 @@ const UPDATE_USER = gql`
       role
     }
   }
-`
+`;
 
 const DELETE_USER = gql`
   mutation RemoveUser($removeUserId: Int!) {
     removeUser(id: $removeUserId)
   }
-`
+`;
 
 export function useUsers() {
-  const $q = useQuasar()
+  const $q = useQuasar();
 
   // Reactive data
-  const loading = ref(false)
-  const users = ref<User[]>([])
+  const loading = ref(false);
+  const users = ref<User[]>([]);
 
   // Pagination
   const pagination = ref({
@@ -69,7 +69,7 @@ export function useUsers() {
     page: 1,
     rowsPerPage: 10,
     rowsNumber: 0,
-  })
+  });
 
   // GraphQL operations
   const {
@@ -82,23 +82,23 @@ export function useUsers() {
     {
       fetchPolicy: 'network-only',
     },
-  )
+  );
 
-  const { mutate: createUserMutation } = useMutation(CREATE_USER)
-  const { mutate: updateUserMutation } = useMutation(UPDATE_USER)
-  const { mutate: deleteUserMutation } = useMutation(DELETE_USER)
+  const { mutate: createUserMutation } = useMutation(CREATE_USER);
+  const { mutate: updateUserMutation } = useMutation(UPDATE_USER);
+  const { mutate: deleteUserMutation } = useMutation(DELETE_USER);
 
   // Watch for query results
   watch(usersResult, (newResult) => {
     if (newResult?.users) {
-      users.value = newResult.users
-      pagination.value.rowsNumber = newResult.users.length
+      users.value = newResult.users;
+      pagination.value.rowsNumber = newResult.users.length;
     }
-  })
+  });
 
   watch(usersLoading, (newLoading) => {
-    loading.value = newLoading
-  })
+    loading.value = newLoading;
+  });
 
   // Actions
   const deleteUser = (user: User) => {
@@ -112,41 +112,41 @@ export function useUsers() {
         try {
           await deleteUserMutation({
             removeUserId: Number(user.id),
-          })
-          await refetchUsers()
+          });
+          await refetchUsers();
           $q.notify({
             type: 'positive',
             message: `Đã xóa người dùng ${user.username}`,
             position: 'top',
-          })
+          });
         } catch (err) {
-          console.error('Error deleting user:', err)
+          console.error('Error deleting user:', err);
           $q.notify({
             type: 'negative',
             message: 'Có lỗi xảy ra khi xóa người dùng',
             position: 'top',
-          })
+          });
         }
-      })()
-    })
-  }
+      })();
+    });
+  };
 
   const onRequest = (props: {
     pagination: {
-      sortBy: string
-      descending: boolean
-      page: number
-      rowsPerPage: number
-      rowsNumber?: number
-    }
-    filter?: unknown
-    getCellValue: (col: unknown, row: unknown) => unknown
+      sortBy: string;
+      descending: boolean;
+      page: number;
+      rowsPerPage: number;
+      rowsNumber?: number;
+    };
+    filter?: unknown;
+    getCellValue: (col: unknown, row: unknown) => unknown;
   }) => {
     pagination.value = {
       ...props.pagination,
       rowsNumber: props.pagination.rowsNumber || 0,
-    }
-  }
+    };
+  };
 
   return {
     // Data
@@ -162,5 +162,5 @@ export function useUsers() {
     // Mutations
     createUserMutation,
     updateUserMutation,
-  }
+  };
 }
