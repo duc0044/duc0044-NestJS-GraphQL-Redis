@@ -48,4 +48,8 @@ import { Tag } from '../entities/tag.entity';
     }),
   ],
 })
-export class AppConfigModule {}
+export class AppConfigModule {
+  constructor(private readonly configService: ConfigService) {
+    console.log(this.configService.get('database.host'));
+  }
+}

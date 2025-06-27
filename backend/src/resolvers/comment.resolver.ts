@@ -9,7 +9,7 @@ import {
 
 @Resolver(() => Comment)
 export class CommentResolver {
-  constructor(private readonly commentService: CommentService) { }
+  constructor(private readonly commentService: CommentService) {}
 
   @Mutation(() => Comment)
   async createComment(

@@ -12,7 +12,7 @@ export class CommentService {
     @InjectRepository(Comment)
     private commentRepository: Repository<Comment>,
     private redisService: RedisService,
-  ) { }
+  ) {}
 
   private getCacheKey(method: string, id?: number): string {
     return `comment:${method}${id ? `:${id}` : ''}`;

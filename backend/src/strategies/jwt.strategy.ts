@@ -25,7 +25,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       }
       return user;
     } catch (error) {
-      throw new UnauthorizedException('Invalid token');
+      throw new UnauthorizedException('Invalid token' + error);
     }
   }
 }

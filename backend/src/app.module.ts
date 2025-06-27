@@ -16,7 +16,6 @@ import { TagModule } from './modules/tag.module';
     AppConfigModule,
     RedisModule,
     AuthModule,
-
     // Blog modules
     UserModule,
     CategoryModule,
