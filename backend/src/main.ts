@@ -1,6 +1,8 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import graphqlUploadExpress from 'graphql-upload/graphqlUploadExpress.mjs';
+import { ValidationError, ValidationPipe } from '@nestjs/common';
+import { UserInputError } from 'apollo-server-express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -16,6 +18,16 @@ async function bootstrap() {
     ],
     methods: ['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS'],
   });
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      exceptionFactory: (errors: ValidationError[]): UserInputError => {
+        return new UserInputError('Validation failed', {
+          invalidArgs: errors,
+        });
+      },
+    }),
+  );
   app.use(
     graphqlUploadExpress({
       maxFileSize: 10000000000,

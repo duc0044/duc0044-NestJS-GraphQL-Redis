@@ -1,15 +1,17 @@
 import { InputType, Field, Int, ObjectType } from '@nestjs/graphql';
-import { IsNotEmpty, IsString, IsOptional, IsNumber } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional, IsNumber, MinLength } from 'class-validator';
 
 @InputType()
 export class CreateCommentInput {
   @Field()
-  @IsNotEmpty()
   @IsString()
+  @IsNotEmpty({ message: 'Content is required' })
+  @MinLength(10, { message: 'Content must be at least 10 characters' })
   content: string;
 
   @Field(() => Int)
   @IsNumber()
+  @IsNotEmpty({ message: 'User ID is required' })
   user_id: number;
 
   @Field(() => Int)

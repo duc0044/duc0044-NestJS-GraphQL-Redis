@@ -6,9 +6,17 @@
   "password": 1,
   "database": "BK_HC_TEST",
   "synchronize": false,
-  "logging": true,
-  "entities": ["dist/**/*.entity.js"],
-  "migrations": ["dist/database/migrations/*.js"],
-  "subscribers": ["dist/database/subscriber/*.js"],
-  "cli": { "migrationsDir": "src/database/migrations" }
+  "logging": false,
+  "entities": [
+    "dist/**/*.entity.js"
+  ],
+  "migrations": [
+    "dist/database/migrations/*.js"
+  ],
+  "subscribers": [
+    "dist/database/subscriber/*.js"
+  ],
+  "cli": {
+    "migrationsDir": "src/database/migrations"
+  }
 }

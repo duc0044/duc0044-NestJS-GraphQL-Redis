@@ -6,25 +6,29 @@ import {
   IsOptional,
   IsNumber,
   IsArray,
+  IsNotEmpty,
 } from 'class-validator';
 
 @InputType()
 export class CreatePostInput {
   @Field()
   @IsString()
-  @MinLength(5)
-  @MaxLength(200)
+  @MinLength(5, { message: 'Title must be at least 5 characters' })
+  @MaxLength(200, { message: 'Title must be less than 200 characters' })
+  @IsNotEmpty({ message: 'Title is required' })
   title: string;
 
   @Field()
   @IsString()
-  @MinLength(5)
-  @MaxLength(200)
+  @MinLength(5, { message: 'Slug must be at least 5 characters' })
+  @MaxLength(200, { message: 'Slug must be less than 200 characters' })
+  @IsNotEmpty({ message: 'Slug is required' })
   slug: string;
 
   @Field()
   @IsString()
-  @MinLength(10)
+  @MinLength(10, { message: 'Content must be at least 10 characters' })
+  @IsNotEmpty({ message: 'Content is required' })
   content: string;
 
   @Field({ nullable: true })

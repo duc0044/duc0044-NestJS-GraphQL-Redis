@@ -8,5 +8,6 @@ export const databaseConfig = registerAs('database', () => ({
   password: process.env.DATABASE_PASSWORD || '140204',
   database: process.env.DATABASE_NAME || 'test',
   synchronize: true,
+  logging: false,
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
 }));
